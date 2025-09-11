@@ -1,13 +1,19 @@
 CC = gcc
-CFLAGS = -Wall -O2
-FINAL = perceptron
+CFLAGS = -Wall -O2 -Iinclude
+TARGET = $(BUILD_DIR)/perceptron
+SRC_DIR = src
+BUILD_DIR = build
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 
-$(FINAL): $(FINAL).o
+$(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
+
+-include $(OBJS:.o=.d)
 
 .PHONY: clean
 clean:
-	rm -f $(FINAL) *.o
+	rm -f $(TARGET) $(OBJS)

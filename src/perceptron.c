@@ -1,6 +1,6 @@
 #include <stdio.h>
 
 int main(){
-    printf("Perceptron\n");
+    printf("Perceptron: Hello World.\n");
     return 0;
 }

@@ -5,7 +5,7 @@
             "name": "Debug perceptron",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/perceptron",
+            "program": "${workspaceFolder}/build/perceptron",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
