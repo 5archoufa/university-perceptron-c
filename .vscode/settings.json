@@ -1,0 +1,24 @@
+{
+    "files.associations": {
+        "layer.h": "c",
+        "stdio.h": "c",
+        "array": "c",
+        "bitset": "c",
+        "string_view": "c",
+        "format": "c",
+        "initializer_list": "c",
+        "ranges": "c",
+        "span": "c",
+        "stdlib.h": "c",
+        "neuron.h": "c",
+        "time.h": "c",
+        "stupid_math.h": "c",
+        "neural_network.h": "c",
+        "xatom.h": "c",
+        "cstdlib": "c",
+        "v3.h": "c",
+        "circle.h": "c",
+        "shape.C": "cpp",
+        "pixel.h": "c"
+    }
+}
