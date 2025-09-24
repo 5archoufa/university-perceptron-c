@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.c": "c",
         "layer.h": "c",
         "stdio.h": "c",
         "array": "c",
@@ -19,6 +20,39 @@
         "v3.h": "c",
         "circle.h": "c",
         "shape.C": "cpp",
-        "pixel.h": "c"
-    }
+        "pixel.h": "c",
+        "v2.h": "c",
+        "input_manager.h": "c",
+        "camera_controller.h": "c",
+        "xlib.h": "c",
+        "stack.h": "c",
+        "*.cs": "c",
+        "camera.h": "c",
+        "camera_input_handler.C": "cpp",
+        "state_machine.h": "c",
+        "chrono": "c",
+        "text_encoding": "c",
+        "typeinfo": "c",
+        "s_neural_network.h": "c",
+        "sm_perceptron.h": "c",
+        "logger.h": "c",
+        "keysym.h": "c",
+        "shape.h": "c",
+        "entity.h": "c",
+        "component.h": "c",
+        "stdbool.h": "c",
+        "renderer.h": "c",
+        "bounds.h": "c",
+        "renderdata.h": "c",
+        "window.h": "c",
+        "random": "c",
+        "algorithm": "c",
+        "cstdint": "c",
+        "xshm.h": "c",
+        "ipc.h": "c",
+        "renderer-list.h": "c",
+        "string": "c",
+        "xinput2.h": "c"
+    },
+    "makefile.configureOnOpen": false
 }

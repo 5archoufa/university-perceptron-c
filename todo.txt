@@ -1,0 +1,1 @@
+- componennts will probably have to exist as a struct, since i need to define things like OnDestroy and OnAwake.
