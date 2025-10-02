@@ -1,5 +1,5 @@
 #include "state_machine/state_machine.h"
-
+#include <stdio.h>
 static LogConfig _logConfig = {"StateMachine", LOG_LEVEL_INFO, LOG_COLOR_ORANGE};
 
 StateMachine *StateMachine_Create(char *name)
@@ -12,6 +12,12 @@ StateMachine *StateMachine_Create(char *name)
     stateMachine->_logConfig.logLevel = LOG_LEVEL_INFO;
     stateMachine->_logConfig.color = LOG_COLOR_DEFAULT;
     return stateMachine;
+}
+
+void StateMachine_Tick(StateMachine* stateMachine){
+    if(stateMachine->state != NULL && stateMachine->state->Tick != NULL){
+        stateMachine->state->Tick();
+    }
 }
 
 void StateMachine_Free(StateMachine *stateMachine)
@@ -31,7 +37,9 @@ StateMachine_State *StateMachine_State_Create(
     state->name = name;
     state->CanEnter = CanEnter;
     state->OnEnter = OnEnter;
+    state->Tick = Tick;
     state->OnExit = OnExit;
+    state->CanExit= CanExit;
     return state;
 }
 

@@ -2,51 +2,40 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-Layer *CreateLayer(char *name, int neuronCount, Neuron **neurons)
+void Layer_Setup(Layer *layer, char *name, size_t inputs_size, size_t neurons_size, float (*CaculateInitialBias)(), float (*CaculateInitialWeight)())
 {
-    Layer *layer = malloc(sizeof(Layer));
     layer->name = name;
-    layer->neuronCount = neuronCount;
-    layer->neurons = neurons;
-    return layer;
+    layer->inputs_size = inputs_size;
+    layer->neurons_size = neurons_size;
+    layer->neurons = malloc(neurons_size * sizeof(Neuron));
+    for (int i = 0; i < neurons_size; i++)
+    {
+        Neuron_Setup(&layer->neurons[i], inputs_size, CaculateInitialBias, CaculateInitialWeight);
+    }
 }
 
-Layer *CreateLayer_RandomWeights(char *name, int neuronCount, int weightCount)
+void Layer_Free(Layer *layer)
 {
-    Layer *layer = malloc(sizeof(Layer));
-    layer->name = name;
-    layer->neuronCount = neuronCount;
-    layer->neurons = malloc(neuronCount * sizeof(Neuron));
-    for (int i = 0; i < neuronCount; i++)
+    for (int i = 0; i < layer->neurons_size; i++)
     {
-        layer->neurons[i] = CreateNeuron_RandomWeights(weightCount);
+        Neuron_Free(&layer->neurons[i]);
     }
-    return layer;
-}
-
-void FreeLayer(Layer *layer)
-{
-    printf("Free layer %s\n", layer->name);
-    for (int i = 0; i < layer->neuronCount; i++)
-    {
-        FreeNeuron(layer->neurons[i]);
-    }
-    free(layer->neurons);
     free(layer->name);
-    free(layer);
+    free(layer->neurons);
 }
 
-void PrintLayer(Layer *layer)
+void Layer_Print(Layer *layer)
 {
-    char *os = malloc(layer->neuronCount * sizeof(char));
-    for (int i = 0; i < layer->neuronCount; i++)
+    char *os = malloc((layer->neurons_size + 1) * sizeof(char));
+    for (int i = 0; i < layer->neurons_size; i++)
     {
         os[i] = 'O';
     }
+    os[layer->neurons_size] = '\0';
     printf("Layer<%s> [%s]: \n", os, layer->name);
-    for (int i = 0; i < layer->neuronCount; i++)
+    for (int i = 0; i < layer->neurons_size; i++)
     {
-        PrintNeuron(layer->neurons[i]);
+        Neuron_Print(&layer->neurons[i]);
     }
     free(os);
 }

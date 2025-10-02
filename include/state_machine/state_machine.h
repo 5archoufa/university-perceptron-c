@@ -39,7 +39,7 @@ StateMachine_State *StateMachine_State_Create(
     void (*OnExit)(StateMachine_State *nextState, int argCount, void **args));
 
 void StateMachine_State_Free(StateMachine_State *state);
-
+void StateMachine_Tick(StateMachine* stateMachine);
 bool StateMachine_TrySetState(StateMachine* stateMachine, StateMachine_State *state, int argCount, void **args);
 
 #endif

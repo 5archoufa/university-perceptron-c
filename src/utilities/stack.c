@@ -1,6 +1,7 @@
 #include "utilities/stack.h"
 
-void FreeStack(Stack* stack){
+void FreeStack(Stack *stack)
+{
     free(stack->content);
     free(stack);
 }
@@ -22,7 +23,7 @@ void *Pop(Stack *stack)
         return NULL;
     }
 
-    void* output = stack->content[stack->count - 1];
+    void *output = stack->content[stack->count - 1];
     stack->count--;
     if (stack->count == 0)
     {
@@ -39,14 +40,7 @@ void *Pop(Stack *stack)
 void Push(Stack *stack, void *item)
 {
     stack->count++;
-    if (stack->content == NULL)
-    {
-        stack->content = malloc(stack->count * sizeof(void *));
-    }
-    else
-    {
-        stack->content = realloc(stack->content, stack->count * sizeof(void *));
-    }
+    stack->content = realloc(stack->content, stack->count * sizeof(void *));
     stack->content[stack->count - 1] = item;
 }
 

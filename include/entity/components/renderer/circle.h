@@ -8,7 +8,7 @@
 
 typedef struct
 {
-    EC_Renderer* renderer;
+    EC_Renderer* EC_renderer_circle;
     float radius;
 } RD_Circle;
 

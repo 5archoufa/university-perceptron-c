@@ -2,153 +2,159 @@
 #include <stdbool.h>
 #include "entity/entity.h"
 #include "logging/logger.h"
+#include "world/world.h"
 #include <stdio.h>
 
 static LogConfig _logConfig = {"Entity", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
-static Entity *_world;
-static bool _isInitialized;
 
-void Entity_World_Init()
+static void Component_Free(Component *component)
 {
-    if (_isInitialized)
+    if (component != NULL)
     {
-        LogError(&_logConfig, "Can't call Entity_InitWorld(): World is already Initialized.");
-        return;
-    }
-    LogInit(&_logConfig, "");
-
-    // Create World Entity
-    LogCreate(&_logConfig, "ENTITIES_ROOT");
-    _world = malloc(sizeof(Entity));
-    _world->name = "ENTITIES_ROOT";
-    // Children
-    _world->children = NULL;
-    _world->childCount = 0;
-    // Transform
-    _world->parent = NULL;
-    _world->position = V3_ZERO;
-    _world->rotation = 0.0;
-    _world->localPos = V3_ZERO;
-    _world->scale = V2_ONE;
-    _world->localScale = V2_ONE;
-    _world->pivot = V2_HALF;
-    _world->localRot = 0.0;
-    // Components
-    _world->componentCount = 0;
-    _world->_component_keys = NULL;
-    _world->_component_values = NULL;
-
-    _isInitialized = true;
-}
-
-void Entity_World_Awake()
-{
-    // Log(&_logConfig, "Calling Awake() On %d Entities.", _world->childCount);
-    Entity *entity = NULL;
-    Component *component = NULL;
-    for (int e = 0; e < _world->childCount; e++)
-    {
-        entity = _world->children[e];
-        for (int c = 0; c < entity->componentCount; c++)
-        {
-            component = entity->_component_values[c];
-            if (component->Awake != NULL)
-            {
-                component->Awake(component);
-            }
-        }
-    }
-}
-
-void Entity_World_Start()
-{
-    // Log(&_logConfig, "Calling Start() On %d Entities.", _world->childCount);
-    Entity *entity = NULL;
-    Component *component = NULL;
-    for (int e = 0; e < _world->childCount; e++)
-    {
-        entity = _world->children[e];
-        for (int c = 0; c < entity->componentCount; c++)
-        {
-            component = entity->_component_values[c];
-            if (component->Start != NULL)
-            {
-                component->Start(component);
-            }
-        }
-    }
-}
-
-void Entity_World_Update()
-{
-    // Log(&_logConfig, "Calling Update() On %d Entities.", _world->childCount);
-    Entity *entity = NULL;
-    Component *component = NULL;
-    for (int e = 0; e < _world->childCount; e++)
-    {
-        entity = _world->children[e];
-        for (int c = 0; c < entity->componentCount; c++)
-        {
-            component = entity->_component_values[c];
-            if (component->Update != NULL)
-            {
-                component->Update(component);
-            }
-        }
-    }
-}
-
-void Entity_World_LateUpdate()
-{
-    // Log(&_logConfig, "Calling LateUpdate() On %d Entities.", _world->childCount);
-    Entity *entity = NULL;
-    Component *component = NULL;
-    for (int e = 0; e < _world->childCount; e++)
-    {
-        entity = _world->children[e];
-        for (int c = 0; c < entity->componentCount; c++)
-        {
-            component = entity->_component_values[c];
-            if (component->LateUpdate != NULL)
-            {
-                component->LateUpdate(component);
-            }
-        }
-    }
-}
-
-void Entity_World_Free()
-{
-    Entity_Free(_world);
-}
-
-static void Entity_AddChild(Entity *entity, Entity *child)
-{
-    entity->childCount++;
-    if (entity->children == NULL)
-    {
-        entity->children = malloc(sizeof(Entity *));
+        component->Free(component);
     }
     else
     {
-        entity->children = realloc(entity->children, entity->childCount * sizeof(Entity *));
+        LogWarning(&_logConfig, "Couldn't call Free() on component.self (NULL). Will Ignore.");
     }
-    entity->children[entity->childCount - 1] = child;
+    free(component);
 }
 
-Entity *Entity_Create_WithoutParent(char *name, V3 position, float rotation, V2 scale, V2 pivot)
+void Entity_Awake(Entity *entity)
+{
+    // Log(&_logConfig, "Calling Update() On %d Entities.", _world->childCount);
+    Component *component = NULL;
+    for (int i = 0; i < entity->componentCount; i++)
+    {
+        component = entity->component_values[i];
+        if (component->Awake != NULL)
+        {
+            component->Awake(component);
+        }
+    }
+    for (int i = 0; i < entity->children_size; i++)
+    {
+        Entity_Awake(entity->children[i]);
+    }
+}
+
+void Entity_Start(Entity *entity)
+{
+    // Log(&_logConfig, "Calling Update() On %d Entities.", _world->childCount);
+    Component *component = NULL;
+    for (int i = 0; i < entity->componentCount; i++)
+    {
+        component = entity->component_values[i];
+        if (component->Start != NULL)
+        {
+            component->Start(component);
+        }
+    }
+    for (int i = 0; i < entity->children_size; i++)
+    {
+        Entity_Start(entity->children[i]);
+    }
+}
+
+void Entity_Update(Entity *entity)
+{
+    // Log(&_logConfig, "Calling Update() On %d Entities.", _world->childCount);
+    Component *component = NULL;
+    for (int i = 0; i < entity->componentCount; i++)
+    {
+        component = entity->component_values[i];
+        if (component->Update != NULL)
+        {
+            component->Update(component);
+        }
+    }
+    for (int i = 0; i < entity->children_size; i++)
+    {
+        Entity_Update(entity->children[i]);
+    }
+}
+
+void Entity_LateUpdate(Entity *entity)
+{
+    // Log(&_logConfig, "Calling LateUpdate() On %d Entities.", _world->childCount);
+    Component *component = NULL;
+    for (int i = 0; i < entity->componentCount; i++)
+    {
+        component = entity->component_values[i];
+        if (component->LateUpdate != NULL)
+        {
+            component->LateUpdate(component);
+        }
+    }
+    for (int i = 0; i < entity->children_size; i++)
+    {
+        Entity_LateUpdate(entity->children[i]);
+    }
+}
+
+void Entity_FixedUpdate(Entity *entity)
+{
+    // Log(&_logConfig, "Calling LateUpdate() On %d Entities.", _world->childCount);
+    Component *component = NULL;
+    for (int i = 0; i < entity->componentCount; i++)
+    {
+        component = entity->component_values[i];
+        if (component->FixedUpdate != NULL)
+        {
+            component->FixedUpdate(component);
+        }
+    }
+    for (int i = 0; i < entity->children_size; i++)
+    {
+        Entity_FixedUpdate(entity->children[i]);
+    }
+}
+
+static void Entity_SetParent(Entity *parent, Entity *child)
+{
+    child->parent = parent;
+    // Update local transform
+    child->localPos = V3_SUB(&child->position, &parent->position);
+    child->localRot = child->rotation - parent->rotation;
+    child->localScale = V2_DIV(&child->scale, &parent->scale);
+    // Update parent
+    parent->children_size++;
+    parent->children = realloc(parent->children, parent->children_size * sizeof(Entity *));
+    parent->children[parent->children_size - 1] = child;
+}
+
+Entity *Entity_Create(Entity *parent, char *name, V3 position, float rotation, V2 scale, V2 pivot)
 {
     LogCreate(&_logConfig, name);
     Entity *entity = malloc(sizeof(Entity));
     entity->name = name;
-    // Children
-    entity->children = NULL;
-    entity->childCount = 0;
     // Transform
-    entity->parent = _world;
     entity->position = position;
     entity->rotation = rotation;
-    entity->scale = _world->scale;
+    entity->scale = scale;
+    entity->pivot = pivot;
+    // Components
+    entity->componentCount = 0;
+    entity->component_keys = NULL;
+    entity->component_values = NULL;
+    // Children
+    entity->children = NULL;
+    entity->children_size = 0;
+    Entity_SetParent(parent, entity);
+
+    return entity;
+}
+
+Entity *Entity_Create_WorldParent(World *world, V3 position, float rotation, V2 scale, V2 pivot)
+{
+    LogCreate(&_logConfig, "World<%s>'s Parent Entity", world->name);
+    Entity *entity = malloc(sizeof(Entity));
+    entity->name = world->name;
+    // Transform
+    entity->parent = NULL;
+    entity->position = position;
+    entity->rotation = rotation;
+    entity->scale = scale;
     entity->pivot = pivot;
     // Local Transform
     entity->localPos = V3_ZERO;
@@ -156,31 +162,69 @@ Entity *Entity_Create_WithoutParent(char *name, V3 position, float rotation, V2 
     entity->localScale = V2_ONE;
     // Components
     entity->componentCount = 0;
-    entity->_component_keys = NULL;
-    entity->_component_values = NULL;
-    Entity_AddChild(_world, entity);
+    entity->component_keys = NULL;
+    entity->component_values = NULL;
+    // Children
+    entity->children = NULL;
+    entity->children_size = 0;
 
     return entity;
 }
 
-void Entity_Free(Entity *entity)
+static void Entity_RemoveChild(Entity *parent, Entity *child)
 {
-    LogFree(&_logConfig, "%s (%d Children)", entity->name, entity->childCount);
+    if (parent->children_size <= 1)
+    {
+        parent->children_size = 0;
+        parent->children = NULL;
+        return;
+    }
+    for (int i = 0; i < parent->children_size; i++)
+    {
+        if (parent->children[i] == child)
+        {
+            for (int j = i; j < parent->children_size - 1; j++)
+            {
+                parent->children[j] = parent->children[j + 1];
+            }
+            parent->children_size--;
+            Entity **children = realloc(parent->children, parent->children_size * sizeof(Entity *));
+            if (children != NULL)
+            {
+                parent->children = children;
+            }
+            break;
+        }
+    }
+}
+
+void Entity_Free(Entity *entity, bool updateParent)
+{
+    LogFree(&_logConfig, "%s (%d Children)", entity->name, entity->children_size);
+    // Remove from parent
+    if (updateParent && entity->parent != NULL)
+    {
+        LogFree(&_logConfig, "Removing %s from its parent %s", entity->name, entity->parent->name);
+        Entity_RemoveChild(entity->parent, entity);
+    }
+    // Free Components
+    printf("[%s]:: Will free %d components...\n", entity->name, entity->componentCount);
     for (int i = 0; i < entity->componentCount; i++)
     {
-        printf("Will free component[%d]\n", i);
-        Component_Free(entity->_component_values[i]);
+        Component_Free(entity->component_values[i]);
     }
-    free(entity->_component_keys);
-    free(entity->_component_values);
-    for (int i = 0; i < entity->childCount; i++)
+    free(entity->component_keys);
+    free(entity->component_values);
+    // Free Children
+    for (int i = 0; i < entity->children_size; i++)
     {
         if (entity->children[i] != NULL)
         {
-            Entity_Free(entity->children[i]);
+            Entity_Free(entity->children[i], false);
         }
     }
     free(entity->children);
+    // Free Entity
     free(entity);
 }
 
@@ -188,35 +232,55 @@ Component *Entity_GetComponent(Entity *entity, EC_Type componentType)
 {
     for (int i = 0; i < entity->componentCount; i++)
     {
-        if (entity->_component_keys[i] == componentType)
+        if (entity->component_keys[i] == componentType)
         {
-            return entity->_component_values[i];
+            return entity->component_values[i];
         }
     }
     return NULL;
 }
 
+void Entity_RemoveComponent(Entity *entity, Component *component)
+{
+    if (entity->componentCount <= 1)
+    {
+        entity->componentCount = 0;
+        entity->component_keys = NULL;
+        entity->component_values = NULL;
+        return;
+    }
+    for (int i = 0; i < entity->componentCount; i++)
+    {
+        if (entity->component_values[i] == component)
+        {
+            for (int j = i; j < entity->componentCount - 1; j++)
+            {
+                entity->component_values[j] = entity->component_values[j + 1];
+                entity->component_keys[j] = entity->component_keys[j + 1];
+            }
+            entity->componentCount--;
+            Component **component_values = realloc(entity->component_values, entity->componentCount * sizeof(Component *));
+            EC_Type *component_keys = realloc(entity->component_keys, entity->componentCount * sizeof(EC_Type));
+            if (component_values != NULL)
+            {
+                entity->component_values = component_values;
+            }
+            if (component_keys != NULL)
+            {
+                entity->component_keys = component_keys;
+            }
+            break;
+        }
+    }
+}
+
 void Entity_AddComponent(Entity *entity, Component *component)
 {
     entity->componentCount++;
-    if (entity->_component_values == NULL)
-    {
-        entity->_component_values = malloc(sizeof(Component *));
-    }
-    else
-    {
-        entity->_component_values = realloc(entity->_component_values, entity->componentCount * sizeof(Component *));
-    }
-    if (entity->_component_keys == NULL)
-    {
-        entity->_component_keys = malloc(sizeof(EC_Type));
-    }
-    else
-    {
-        entity->_component_keys = realloc(entity->_component_keys, entity->componentCount * sizeof(EC_Type));
-    }
-    entity->_component_keys[entity->componentCount-1] = component->type;
-    entity->_component_values[entity->componentCount - 1] = component;
+    entity->component_values = realloc(entity->component_values, entity->componentCount * sizeof(Component *));
+    entity->component_keys = realloc(entity->component_keys, entity->componentCount * sizeof(EC_Type));
+    entity->component_keys[entity->componentCount - 1] = component->type;
+    entity->component_values[entity->componentCount - 1] = component;
 }
 
 void Entity_AddLocalPos(Entity *entity, V3 addition)
@@ -235,13 +299,6 @@ void Entity_AddPos(Entity *entity, V3 addition)
     Entity_SetPos(entity, V3_ADD(&entity->position, &addition));
 }
 
-void Entity_SetParent(Entity *entity, Entity *parent)
-{
-    // Update local pos
-    entity->parent = parent;
-    entity->localPos = V3_SUB(&entity->position, &parent->position);
-}
-
 void Entity_SetPos(Entity *entity, V3 position)
 {
     // Update local position
@@ -250,7 +307,7 @@ void Entity_SetPos(Entity *entity, V3 position)
     {
         V3_ADD_FIRST(&entity->localPos, &diff);
     }
-    for (int i = 0; i < entity->childCount; i++)
+    for (int i = 0; i < entity->children_size; i++)
     {
         Entity_AddPos(entity->children[i], diff);
     }
@@ -266,7 +323,8 @@ Component *Component_Create(void *self,
                             void (*Awake)(Component *),
                             void (*Start)(Component *),
                             void (*Update)(Component *),
-                            void (*LateUpdate)(Component *))
+                            void (*LateUpdate)(Component *),
+                            void (*FixedUpdate)(Component *))
 {
     Component *component = malloc(sizeof(Component));
     component->entity = entity;
@@ -277,19 +335,17 @@ Component *Component_Create(void *self,
     component->Start = Start;
     component->Update = Update;
     component->LateUpdate = LateUpdate;
+    component->FixedUpdate = FixedUpdate;
     Entity_AddComponent(entity, component);
     return component;
 }
 
-void Component_Free(Component *component)
+void Component_SetActive(Component *component, bool isActive)
 {
-    if (component != NULL)
+    if (component->isActive == isActive)
     {
-        component->Free(component);
+        return;
     }
-    else
-    {
-        LogWarning(&_logConfig, "Couldn't call Free() on component.self (NULL). Will Ignore.");
-    }
-    free(component);
+    component->isActive = isActive;
+    component->SetActive(component, isActive);
 }

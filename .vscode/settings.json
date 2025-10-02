@@ -52,7 +52,22 @@
         "ipc.h": "c",
         "renderer-list.h": "c",
         "string": "c",
-        "xinput2.h": "c"
+        "xinput2.h": "c",
+        "shm.h": "c",
+        "world.h": "c",
+        "perceptron.h": "c",
+        "future": "c",
+        "system_error": "c",
+        "game.h": "c",
+        "ec_layer.h": "c",
+        "ec_neuron.h": "c",
+        "line.h": "c",
+        "stdint.h": "c",
+        "ec_nn_link.h": "c",
+        "ec_neural_network.h": "c",
+        "variant": "c",
+        "ec_nn_layer.h": "c",
+        "ec_nn_neuron.h": "c"
     },
     "makefile.configureOnOpen": false
 }

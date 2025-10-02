@@ -12,10 +12,10 @@
 #include <X11/extensions/XInput2.h>
 #include "logging/logger.h"
 #include "entity/entity.h"
+#include "game/game.h"
 #include "state_machine/instances/sm_perceptron/sm_perceptron.h"
-#include "entity/components/renderer/renderer-list.h"
 
-float DeltaTime = 0.01;
+float DeltaTime = 0.1;
 
 static LogConfig logConfig = {
     "Perceptron", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
@@ -23,11 +23,6 @@ static LogConfig logConfig = {
 int main()
 {
     printf("Perceptron: Hello World.\n");
-    // int weightCounts[] = {3, 1, 3, 2};
-    // NeuralNetwork *neuralNetwork = CreateNeuralNetwork_RandomWeights("Test", 2, 4, weightCounts);
-    // PrintNeuralNetwork(neuralNetwork);
-    // FreeNeuralNetwork(neuralNetwork);
-
     // Create Display
     Display *display = Display_Create();
     if (display == NULL)
@@ -70,17 +65,11 @@ int main()
     XFlush(display);
     InputManager_Init();
 
-    // Renderers
-    RendererList_Init();
-
-    // Initialize World
-    Entity_World_Init();
+    Game_Awake();
+    Game_Start();
 
     // State Machine
-    SMPerceptron_Init();
-    // Start
-    Entity_World_Awake();
-    Entity_World_Start();
+    // StateMachine* sm_perceptron = SMPerceptron_Init();
 
     // Infinite Loop
     bool isRunning = true;
@@ -109,12 +98,12 @@ int main()
         }
 
         // Update Entities
-        Entity_World_Update();
-        Entity_World_LateUpdate();
+        Game_Update();
+        Game_LateUpdate();
+        Game_FixedUpdate();
+        //StateMachine_Tick(sm_perceptron);
 
-        // Draw
-        // RenderView(myWindow, camera, shapeCount, shapes);
-        // RenderCameraDebug(myWindow, camera);
+        // Render
         XFlush(myWindow->display);
 
         // Handle window events
@@ -130,9 +119,8 @@ int main()
 
     // Free up memory
     InputManager_Free();
-    Entity_World_Free();
+    Game_Free();
     SMPerceptron_Free();
-    RendererList_Free();
     MyWindow_Free(myWindow);
 
     return 0;

@@ -9,11 +9,19 @@
 #include "entity/components/renderer/renderer.h"
 #include "entity/components/renderer/circle.h"
 #include "entity/components/camera/camera_controller.h"
+#include "perceptron.h"
+// static float timer = 0;
 
-static Entity* E_camera = NULL;
+void Tick()
+{
+    // timer -= DeltaTime;
+    // if (timer < 0)
+    // {
+    //     timer = ((float)rand() / (float)RAND_MAX) * 1.5f;
 
-void Tick(){
-    
+    //     Entity *E_circle = Entity_Create("Circle", (V3){((float)rand() / (float)RAND_MAX) * 3200, ((float)rand() / (float)RAND_MAX) * 1800, 0}, 0.0, V2_ZERO, V2_HALF);
+    //     RD_Circle_CreateWithRenderer(E_circle, 0);
+    // }
 }
 
 static bool CanEnter(StateMachine_State *previousState, int argCount, void **args)
@@ -23,15 +31,6 @@ static bool CanEnter(StateMachine_State *previousState, int argCount, void **arg
 
 static void OnEnter(StateMachine_State *previousState, int argCount, void **args)
 {
-    // Camera
-    E_camera = Entity_Create_WithoutParent("Main Camera", V3_ZERO, 0.0, V2_ONE, V2_HALF);
-    EC_Camera *camera = EC_Camera_Create(E_camera, MainWindow->image,(V2){1600, 900});
-    EC_CameraController_Create(E_camera, camera, (V2){1.0, 1.0});
-    
-    // Neuron
-    Entity* E_circle = Entity_Create_WithoutParent("Circle", V3_ZERO, 0.0, V2_ZERO, V2_HALF);
-    EC_Renderer* EC_circle_renderer = RD_Circle_CreateWithRenderer(E_circle, 100);
-    
     // V3 center = {1000, 500, 0};
     // Shape *shape_circle = CreateCircle(center, 0.0, V2_HALF, 300);
 

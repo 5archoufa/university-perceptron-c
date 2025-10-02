@@ -5,11 +5,12 @@
 static StateMachine *sm_perceptron = NULL;
 static StateMachine_State *s_neuralNetwork = NULL;
 
-void SMPerceptron_Init()
+StateMachine* SMPerceptron_Init()
 {
     sm_perceptron = StateMachine_Create("SMPerceptron");
     s_neuralNetwork = SMPerceptron_SNeuralNetwork_Create();
     StateMachine_TrySetState(sm_perceptron, s_neuralNetwork, 0, NULL);
+    return sm_perceptron;
 }
 
 void SMPerceptron_Free()

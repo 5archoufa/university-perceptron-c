@@ -1,2 +1,2 @@
 make
-valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./build/perceptron
+valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s ./build/perceptron

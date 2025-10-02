@@ -14,8 +14,10 @@ struct V3{
 
 V3 V3_ADD(const V3* a, const V3* b);
 void V3_ADD_FIRST(V3 *a, const V3 *b);
+void V3_ADD_V2_FIRST(V3 *a, const V2 *b);
 V3 V3_SUB(const V3* a, const V3* b);
 V3 V3_MUL(const V3* a, const V3* b);
+V3 V3_DIV(const V3* a, const V3* b);
 V3 V3_NEG(const V3* a);
 V3 V3_ADD_V2(const V3 *a, const V2 *b);
 #endif

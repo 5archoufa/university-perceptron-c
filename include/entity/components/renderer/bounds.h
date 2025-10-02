@@ -5,12 +5,10 @@
 #include "utilities/math/v2.h"
 
 typedef struct Bounds{
-    V3* position;
+    V3 position;
     V2 dimensions;
-    V2* pivot;
-    V2* scale;
 } Bounds;
 
-void Bounds_Setup(Bounds* bounds, V3* position, V2 dimensions, V2* scale, V2* pivot);
+void Bounds_Setup(Bounds* bounds, V3 position, V2 dimensions);
 
 #endif

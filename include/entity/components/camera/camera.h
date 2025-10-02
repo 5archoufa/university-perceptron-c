@@ -8,14 +8,21 @@
 #include "entity/entity.h"
 #include "entity/components/renderer/bounds.h"
 #include <X11/Xlib.h>
+#include "world/world.h"
 
-typedef struct{
+typedef struct EC_Camera EC_Camera;
+
+struct EC_Camera{
     Component* component;
     V2 viewport;
+    World* world;
     XImage* image;
-} EC_Camera;
+    float pixelsPerMeter;
+    V3* position;
+};
 
 EC_Camera *EC_Camera_Create(Entity* entity, XImage* image, V2 viewport);
 void EC_Camera_Free(Component* component);
-void RenderCameraDebug(MyWindow* myWindow, EC_Camera* camera);
+V2_INT Camera_WorldToScreen_V2(EC_Camera* EC_camera, V2* position);
+V2_INT Camera_WorldToScreen_V3(EC_Camera* EC_camera, V3* position);
 #endif
