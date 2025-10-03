@@ -14,8 +14,14 @@
 #include "entity/entity.h"
 #include "game/game.h"
 #include "state_machine/instances/sm_perceptron/sm_perceptron.h"
+#include <time.h>
 
-float DeltaTime = 0.1;
+// Constants
+const int UPDATE_RATE_LIMIT = 40;
+const int FIXEDUPDATE_RATE_LIMIT = 40;
+// External
+float DeltaTime = 1 / (float)UPDATE_RATE_LIMIT;
+float FixedDeltaTime = 1 / (float)FIXEDUPDATE_RATE_LIMIT;
 
 static LogConfig logConfig = {
     "Perceptron", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
@@ -32,13 +38,15 @@ int main()
     }
     // Create Window
     MyWindowConfig config;
-    config.width = 1600;
-    config.height = 900;
+    config.windowWidth = 1600 * 1.2;
+    config.windowHeight = 900 * 1.2;
+    config.imageWidth = 800;
+    config.imageHeight = 450;
     MyWindow *myWindow = MyWindow_Create(display, config);
 
     // Input
-    int xi_opcode, event, error;
-    if (!XQueryExtension(display, "XInputExtension", &xi_opcode, &event, &error))
+    int xi_opcode, xi_event, error;
+    if (!XQueryExtension(display, "XInputExtension", &xi_opcode, &xi_event, &error))
     {
         fprintf(stderr, "X Input extension not available.\n");
         exit(1);
@@ -71,40 +79,98 @@ int main()
     // State Machine
     // StateMachine* sm_perceptron = SMPerceptron_Init();
 
+    double fixedAccumulator = 0.0;
+    double updateAccumulator = 0.0;
+    int maxPhysicsSteps = 5;
+    int physicsSteps = 0;
+    // FPS
+    int frameCounter = 0;
+    // Temporary Variables
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    double lastTime = ts.tv_sec + ts.tv_nsec * 1e-9;
+    double frameTimer;
     // Infinite Loop
     bool isRunning = true;
     while (isRunning)
     {
-        // Input Events
         XEvent event;
-        while (XPending(display))
+        // Measure Time
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        double now = ts.tv_sec + ts.tv_nsec * 1e-9;
+        float time = now - lastTime;
+        lastTime = now;
+        fixedAccumulator += time;
+        updateAccumulator += time;
+        // Calculate Framerate
+        frameTimer += time;
+        frameCounter++;
+        if (frameTimer >= 1.0)
         {
-            XNextEvent(display, &event);
-            InputManager_ResetInputs();
-            if (XGetEventData(display, &event.xcookie))
-            {
-                InputManager_HandleXEvent(&event);
-                XFreeEventData(display, &event.xcookie);
-            }
-            if (event.type == ClientMessage)
-            {
-                if ((Atom)event.xclient.data.l[0] == myWindow->WM_DELETE)
-                {
-                    isRunning = false;
-                    Log(&logConfig, "WM_DELETE Called. Exiting Main Loop...");
-                    break;
-                }
-            }
+            printf("FPS: %d\n", frameCounter);
+            frameCounter = 0;
+            frameTimer -= 1.0;
         }
 
+        // Input Events
+            while (XPending(display))
+            {
+                InputManager_ResetInputs();
+                XNextEvent(display, &event);
+                if (XGetEventData(display, &event.xcookie))
+                {
+                    InputManager_HandleXEvent(&event);// Input Events
+            while (XPending(display))
+            {
+                InputManager_ResetInputs();
+                XNextEvent(display, &event);
+                if (XGetEventData(display, &event.xcookie))
+                {
+                    InputManager_HandleXEvent(&event);
+                    XFreeEventData(display, &event.xcookie);
+                }
+                if (event.type == ClientMessage)
+                {
+                    if ((Atom)event.xclient.data.l[0] == myWindow->WM_DELETE)
+                    {
+                        isRunning = false;
+                        Log(&logConfig, "WM_DELETE Called. Exiting Main Loop...");
+                        break;
+                    }
+                }
+            }
+                    XFreeEventData(display, &event.xcookie);
+                }
+                if (event.type == ClientMessage)
+                {
+                    if ((Atom)event.xclient.data.l[0] == myWindow->WM_DELETE)
+                    {
+                        isRunning = false;
+                        Log(&logConfig, "WM_DELETE Called. Exiting Main Loop...");
+                        break;
+                    }
+                }
+            }
+
         // Update Entities
-        Game_Update();
-        Game_LateUpdate();
-        Game_FixedUpdate();
-        //StateMachine_Tick(sm_perceptron);
+        if (updateAccumulator >= DeltaTime)
+        {
+            updateAccumulator -= DeltaTime;
+
+            Game_Update();
+            Game_LateUpdate();
+        }
+        while (fixedAccumulator >= FixedDeltaTime && physicsSteps <= maxPhysicsSteps)
+        {
+            physicsSteps++;
+            Game_FixedUpdate();
+            fixedAccumulator -= FixedDeltaTime;
+        }
+        physicsSteps = 0;
+        // StateMachine_Tick(sm_perceptron);
 
         // Render
-        XFlush(myWindow->display);
+        // XFlush(myWindow->display);
 
         // Handle window events
         if (!MyWindow_Handle(myWindow))
@@ -113,7 +179,6 @@ int main()
         }
         else
         {
-            sleep(DeltaTime);
         }
     }
 

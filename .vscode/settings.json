@@ -67,7 +67,15 @@
         "ec_neural_network.h": "c",
         "variant": "c",
         "ec_nn_layer.h": "c",
-        "ec_nn_neuron.h": "c"
+        "ec_nn_neuron.h": "c",
+        "noise.h": "c",
+        "rd_noise.C": "cpp",
+        "rd_noise.h": "c",
+        "functional": "c",
+        "rd_island.h": "c",
+        "limits": "c",
+        "semaphore": "c",
+        "xrender.h": "c"
     },
     "makefile.configureOnOpen": false
 }

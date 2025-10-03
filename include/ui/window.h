@@ -7,14 +7,15 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <X11/extensions/XShm.h>
+#include <X11/extensions/Xrender.h>
 
 typedef struct MyWindow MyWindow;
 extern MyWindow *MainWindow;
 
 typedef struct MyWindowConfig
 {
-    unsigned int height, width;
-
+    size_t imageWidth, imageHeight;
+    size_t windowWidth, windowHeight;
 } MyWindowConfig;
 
 struct MyWindow
@@ -24,6 +25,9 @@ struct MyWindow
     XImage *image;
     Window window;
     XShmSegmentInfo *shminfo;
+    Pixmap pix;
+    Picture picture_source;
+    Picture picture_dest;
     GC gc;
     Atom WM_DELETE;
 };

@@ -30,6 +30,7 @@ InputContext *InputContext_Create(char *name,
 {
     InputContext *inputContext = malloc(sizeof(InputContext));
     inputContext->name = name;
+    inputContext->blockEvents = false;
     // Keys
     inputContext->keyCount = keyCount;
     if (keyCount > 0)

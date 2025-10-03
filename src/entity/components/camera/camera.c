@@ -9,12 +9,13 @@
 #include "entity/components/renderer/bounds.h"
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <X11/extensions/Xrender.h>
 #include <X11/extensions/XShm.h>
 
 static bool EC_Camera_IsInView(EC_Camera *camera, Bounds *bounds)
 {
     V3 *position = &camera->component->entity->position;
-    
+
     float right = position->x + camera->viewport.x * 0.5;
     float left = position->x - camera->viewport.x * 0.5;
     float up = position->y + camera->viewport.y * 0.5;
@@ -49,8 +50,8 @@ static void Camera_LateUpdate(Component *component)
     }
 
     // Render Renderers
-    int rendererCount =  camera->world->rendererCount;
-    EC_Renderer** renderers = camera->world->renderers;
+    int rendererCount = camera->world->rendererCount;
+    EC_Renderer **renderers = camera->world->renderers;
     EC_Renderer *renderer = NULL;
     for (int i = 0; i < rendererCount; i++)
     {
@@ -58,25 +59,29 @@ static void Camera_LateUpdate(Component *component)
         renderer->UpdateBounds(renderer);
         if (!EC_Camera_IsInView(camera, &renderer->bounds))
         {
-            printf("Skipping renderer %s\n", renderer->component->entity->name);
             continue;
         }
         renderer->Render(camera, renderer);
     }
 
     // Blit Image
-    XShmPutImage(MainWindow->display, MainWindow->window, MainWindow->gc,
+    XShmPutImage(MainWindow->display, MainWindow->pix, MainWindow->gc,
                  camera->image, 0, 0, 0, 0, camera->image->width, camera->image->height, False);
+    XRenderComposite(MainWindow->display, PictOpSrc, MainWindow->picture_source, 0, MainWindow->picture_dest,
+                     0, 0, 0, 0, 0, 0, MainWindow->config.windowWidth, MainWindow->config.windowHeight);
     XSync(MainWindow->display, False);
+    // XFlush(MainWindow->display);
 }
 
-V2_INT Camera_WorldToScreen_V2(EC_Camera* EC_camera, V2* position){
-    float x = position->x - EC_camera->position->x+ EC_camera->viewport.x * 0.5;
+V2_INT Camera_WorldToScreen_V2(EC_Camera *EC_camera, V2 *position)
+{
+    float x = position->x - EC_camera->position->x + EC_camera->viewport.x * 0.5;
     float y = position->y - EC_camera->position->y + EC_camera->viewport.y * 0.5;
     return (V2_INT){(int)(x * EC_camera->pixelsPerMeter), (int)(y * EC_camera->pixelsPerMeter)};
 }
 
-V2_INT Camera_WorldToScreen_V3(EC_Camera* EC_camera, V3* position){
+V2_INT Camera_WorldToScreen_V3(EC_Camera *EC_camera, V3 *position)
+{
     float x = position->x - EC_camera->position->x + EC_camera->viewport.x * 0.5;
     float y = position->y - EC_camera->position->y + EC_camera->viewport.y * 0.5;
     return (V2_INT){(int)(x * EC_camera->pixelsPerMeter), (int)(y * EC_camera->pixelsPerMeter)};

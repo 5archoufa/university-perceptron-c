@@ -7,10 +7,10 @@
 #include "logging/logger.h"
 #include "perceptron.h"
 
-static const int INPUT_UP = 0;
-static const int INPUT_DOWN = 2;
-static const int INPUT_LEFT = 1;
-static const int INPUT_RIGHT = 3;
+static const int INPUT_UP = 2;
+static const int INPUT_DOWN = 0;
+static const int INPUT_LEFT = 3;
+static const int INPUT_RIGHT = 1;
 
 static LogConfig _logConfig = {"CameraController", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
 
@@ -22,15 +22,15 @@ static void EC_CameraController_LateUpdate(Component *component)
     {
         Entity_AddPos(component->entity, (V3){cameraController->speed.x * DeltaTime, 0.0, 0.0} );
     }
-    else if (input->keys[INPUT_LEFT].isDown)
+    if (input->keys[INPUT_LEFT].isDown)
     {
         Entity_AddPos(component->entity, (V3){-cameraController->speed.x * DeltaTime, 0.0, 0.0});
     }
-    else if (input->keys[INPUT_UP].isDown)
+    if (input->keys[INPUT_UP].isDown)
     {
         Entity_AddPos(component->entity, (V3){0.0, cameraController->speed.y * DeltaTime, 0.0});
     }
-    else if (input->keys[INPUT_DOWN].isDown)
+    if (input->keys[INPUT_DOWN].isDown)
     {
         Entity_AddPos(component->entity, (V3){0.0, -cameraController->speed.y * DeltaTime, 0.0});
     }

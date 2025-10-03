@@ -21,6 +21,8 @@ typedef enum
     EC_T_NN_LAYER,
     EC_T_NN_NEURON,
     EC_T_NN_LINK,
+    /* Island */
+    EC_T_ISLAND,
 } EC_Type;
 
 struct Component

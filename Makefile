@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -O2 -Iinclude -g -lX11 -lm -lXext -lXi
+CFLAGS = -Wall -O2 -Iinclude -g -lX11 -lm -lXext -lXi -lXrender
 TARGET = $(BUILD_DIR)/perceptron
 SRC_DIR = src
 BUILD_DIR = build
