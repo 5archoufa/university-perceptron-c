@@ -8,10 +8,10 @@
 typedef struct EC_CameraController{
     Component* component;
     EC_Camera* camera;
-    V2 speed;
+    V3 speed;
     InputContext* inputContext;
 } EC_CameraController;
 
-Component *EC_CameraController_Create(Entity* entity, EC_Camera *camera, V2 speed);
+Component *EC_CameraController_Create(Entity* entity, EC_Camera *camera, V3 speed);
 
 #endif

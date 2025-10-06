@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "utilities/stack.h"
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 extern Stack *InputContexts;
 
@@ -57,6 +59,6 @@ InputContext *InputContext_Create(char *name,
 void InputContext_Free(InputContext *inputContext);
 void InputManager_ResetInputs();
 void InputManager_Free();
-void InputManager_Init();
+void InputManager_Init(GLFWwindow *window);
 void InputManager_PushContext(InputContext *inputContext);
 #endif

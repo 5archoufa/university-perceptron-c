@@ -1,0 +1,11 @@
+{
+   ignore gl stuff
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:dlopen
+   fun:dlsym
+   fun:glfwInit
+   fun:glfwCreateWindow
+   fun:glfwMakeContextCurrent
+   fun:gladLoadGLLoader
+}

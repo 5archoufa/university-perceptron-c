@@ -1,14 +1,36 @@
 #include "entity/components/island/island.h"
 #include "entity/components/renderer/rd_island.h"
 #include "input/input_manager.h"
+#include "entity/components/ec_renderer3d/ec_renderer3d.h"
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+#include "logging/logger.h"
+#include "entity/transform.h"
+
+static LogConfig _logConfig = {"EC_Island", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
 
 static const int INPUT_INTER_UP = 0;
 static const int INPUT_INTER_DOWN = 1;
 
+// Colors must be in ABGR format
+static const uint32_t COLOR_GRASS = 0xff32963f;    // #3f9632
+static const uint32_t COLOR_STONE = 0xff22262a;    // #2a2622ff
+static const uint32_t COLOR_SAND = 0xff7cdaeb;     // #ebda7cff
+static const uint32_t COLOR_MOUNTAIN = 0xff20293c; // #3c2920ff
+
+static const size_t ISLAND_LAYERS_SIZE = 4;
+static const float ISLAND_Y_MIN = -19;
+static const float ISLAND_Y_MAX = 20;
+static const NoiseLayer ISLAND_LAYERS[] = {
+    {{ISLAND_Y_MIN, -3}, COLOR_STONE},
+    {{-3, 0.0}, COLOR_SAND},
+    {{0.0, 6.0}, COLOR_GRASS},
+    {{6.0, ISLAND_Y_MAX}, COLOR_MOUNTAIN},
+};
+
 static void EC_Island_Free(Component* component){
     EC_Island* island = (EC_Island*)component->self;
+    InputContext_Free(island->inputContext);
     free(island);
 }
 
@@ -21,13 +43,13 @@ static void EC_Island_Update(Component* component){
     }
 }
 
-static EC_Island* EC_Island_Create(Entity* entity, EC_Renderer* ec_renderer_island){
+static EC_Island* EC_Island_Create(Entity* entity, EC_Renderer3D* ec_renderer3d_island){
     EC_Island* ec_island = malloc(sizeof(EC_Island));
-    ec_island->ec_renderer_island = ec_renderer_island;
+    ec_island->ec_renderer3d_island = ec_renderer3d_island;
     // Input Context
     int keys[] = {
-        XKeysymToKeycode(MainWindow->display, XK_8),
-        XKeysymToKeycode(MainWindow->display, XK_2),
+        GLFW_KEY_8,
+        GLFW_KEY_2
     };
     InputContext* inputContext = InputContext_Create("IslandInputContext",
                                                          2,
@@ -42,11 +64,27 @@ static EC_Island* EC_Island_Create(Entity* entity, EC_Renderer* ec_renderer_isla
     return ec_island;
 }
 
-EC_Island* Prefab_Island(Entity* parent, V3 position, float rotation, V2 scale, V2 pivot){
-    Entity* entity = Entity_Create(parent, "Island", position, rotation, scale, pivot);
+EC_Island* Prefab_Island(Entity* parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, V3 meshScale){
+    LogCreate(&_logConfig, "Prefab_Island");
+    Entity* entity = Entity_Create(parent, "Island", TS, position, rotation, scale);
+    float noiseWidth = 500;
     // Island Renderer
-    EC_Renderer* ec_renderer_island = RD_Island_CreateWithRenderer(entity, 3000, 2000, 50, 1);
+    NoiseModifier modifiers[] = {
+        {
+            .function = Noise_Modifier_Mask_Circle,
+            .argCount = 1,
+            .args = (void*[]){&(float){noiseWidth * 0.45}}
+        }
+    };
+    Noise* noise = Noise_Create(noiseWidth, noiseWidth, 10, ISLAND_Y_MIN, ISLAND_Y_MAX, 1, modifiers);
+    Noise_RecalculateMap(noise);
+    Log(&_logConfig, "Recalculating Noise Map: %dx%d", noise->width, noise->height);
+    // Drop the interpolation in the borders to create an island effect
+    Texture* texture = Texture_CreateEmpty();
+    Mesh* islandMesh = Noise_CreateMesh(noise, meshScale, ISLAND_LAYERS_SIZE, ISLAND_LAYERS, true, NULL, 10);
+    Texture_UploadToGPU(texture);
+    EC_Renderer3D* ec_renderer3d_island = EC_Renderer3D_Create(entity, islandMesh, NULL);
     // Island
-    EC_Island* e_island = EC_Island_Create(entity, ec_renderer_island);
+    EC_Island* e_island = EC_Island_Create(entity, ec_renderer3d_island);
     return e_island;
 }

@@ -1,17 +1,107 @@
 #include "input/input_manager.h"
 #include "utilities/stack.h"
-#include <X11/extensions/XInput2.h>
+#include "logging/logger.h"
+// OpenGL
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 Stack *InputContexts = NULL;
+static LogConfig _logConfig = {"InputManager", LOG_LEVEL_WARN, LOG_COLOR_BLUE};
 
-void InputManager_Init()
+static KeyState *GetKeyState(InputContext *inputContext, int keyId)
 {
-    InputContexts = CreateStack();
+    for (int i = 0; i < inputContext->keyCount; i++)
+    {
+        if (inputContext->keys[i].id == keyId)
+        {
+            return &inputContext->keys[i];
+        }
+    }
+    return NULL;
+}
+static ButtonState *GetButtonState(InputContext *inputContext, int buttonId)
+{
+    for (int i = 0; i < inputContext->buttonCount; i++)
+    {
+        if (inputContext->buttons[i].id == buttonId)
+        {
+            return &inputContext->buttons[i];
+        }
+    }
+    return NULL;
+}
+
+static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+    for (int i = InputContexts->count - 1; i >= 0; i--)
+    {
+        InputContext *inputContext = (InputContext *)InputContexts->content[i];
+        KeyState *keyState = GetKeyState(inputContext, key);
+        if (keyState)
+        {
+            keyState->isPressed = action == GLFW_PRESS || action == GLFW_REPEAT;
+            keyState->isDown = keyState->isPressed;
+            Log(&_logConfig, "Key.isDown %d state changed: %d\n", key, keyState->isDown);
+            keyState->isReleased = action == GLFW_RELEASE;
+        }
+
+        if (inputContext->blockEvents)
+        {
+            break;
+        }
+    }
+}
+
+static void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
+{
+    for (int i = InputContexts->count - 1; i >= 0; i--)
+    {
+        InputContext *inputContext = (InputContext *)InputContexts->content[i];
+        ButtonState *buttonState = GetButtonState(inputContext, button);
+        if (buttonState)
+        {
+            buttonState->isPressed = action == GLFW_PRESS || action == GLFW_REPEAT;
+            buttonState->isDown = buttonState->isPressed;
+            buttonState->isReleased = action == GLFW_RELEASE;
+        }
+
+        if (inputContext->blockEvents)
+        {
+            break;
+        }
+    }
+}
+
+static void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
+{
+    for (int i = InputContexts->count - 1; i >= 0; i--)
+    {
+        InputContext *inputContext = (InputContext *)InputContexts->content[i];
+        for (int i = 0; i < inputContext->motionCount; i++)
+        {
+            inputContext->motions[i].x = xpos;
+            inputContext->motions[i].y = ypos;
+        }
+
+        if (inputContext->blockEvents)
+        {
+            break;
+        }
+    }
+}
+
+void InputManager_Init(GLFWwindow *window)
+{
+    InputContexts = Stack_Create();
+    LogInit(&_logConfig, "Input Manager Initialized.");
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
 }
 
 void InputManager_Free()
 {
-    FreeStack(InputContexts);
+    Stack_Free(InputContexts);
 }
 
 void InputManager_PushContext(InputContext *inputContext)
@@ -85,42 +175,9 @@ void InputContext_Free(InputContext *inputContext)
     free(inputContext);
 }
 
-static KeyState *GetkeyState(InputContext *inputContext, int keyId)
-{
-    for (int i = 0; i < inputContext->keyCount; i++)
-    {
-        if (inputContext->keys[i].id == keyId)
-        {
-            return &inputContext->keys[i];
-        }
-    }
-    return NULL;
-}
-static ButtonState *GetButtonState(InputContext *inputContext, int buttonId)
-{
-    for (int i = 0; i < inputContext->buttonCount; i++)
-    {
-        if (inputContext->buttons[i].id == buttonId)
-        {
-            return &inputContext->buttons[i];
-        }
-    }
-    return NULL;
-}
-static MotionState *GetMotionState(InputContext *inputContext, int motionId)
-{
-    for (int i = 0; i < inputContext->motionCount; i++)
-    {
-        if (inputContext->motions[i].id == motionId)
-        {
-            return &inputContext->motions[i];
-        }
-    }
-    return NULL;
-}
-
 void InputManager_ResetInputs()
 {
+    Log(&_logConfig, "Resetting input states...");
     for (int i = InputContexts->count - 1; i >= 0; i--)
     {
         InputContext *inputContext = (InputContext *)InputContexts->content[i];
@@ -133,52 +190,6 @@ void InputManager_ResetInputs()
         {
             inputContext->buttons[i].isPressed = false;
             inputContext->buttons[i].isReleased = false;
-        }
-    }
-}
-
-void InputManager_HandleXEvent(XEvent *event)
-{
-    XGenericEventCookie *cookie = &event->xcookie;
-    XIDeviceEvent *xievent = cookie->data;
-
-    for (int i = InputContexts->count - 1; i >= 0; i--)
-    {
-        InputContext *inputContext = (InputContext *)InputContexts->content[i];
-        // Handle new input event
-        if (cookie->evtype == XI_KeyPress || cookie->evtype == XI_KeyRelease)
-        {
-            KeyState *key = GetkeyState(inputContext, xievent->detail);
-            if (key != NULL)
-            {
-                key->isPressed = cookie->evtype == XI_KeyPress;
-                key->isDown = key->isPressed;
-                key->isReleased = !key->isPressed;
-                printf("Saving value into state %d: keypress:%d, keydown:%d, keyrelease:%d\n", key->id, key->isPressed, key->isDown, key->isReleased);
-            }
-        }
-        else if (cookie->evtype == XI_ButtonPress || cookie->evtype == XI_ButtonRelease)
-        {
-            ButtonState *button = GetButtonState(inputContext, xievent->detail);
-            if (button != NULL)
-            {
-                button->isPressed = cookie->evtype == XI_ButtonPress;
-                button->isDown = button->isPressed;
-                button->isReleased = !button->isPressed;
-            }
-        }
-        else if (cookie->evtype == XI_Motion)
-        {
-            for (int i = 0; i < inputContext->motionCount; i++)
-            {
-                inputContext->motions[i].x = xievent->event_x;
-                inputContext->motions[i].y = xievent->event_y;
-            }
-        }
-
-        if (inputContext->blockEvents)
-        {
-            break;
         }
     }
 }

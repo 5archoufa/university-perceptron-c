@@ -12,20 +12,23 @@ static EC_NN_Layer *EC_Layer_Create(Entity *entity, Layer *layer, EC_NN_Neuron *
     return EC_layer;
 }
 
-EC_NN_Layer *Prefab_Layer(Entity *parent, V3 position, float rotation, V2 scale, V2 pivot, Layer *layer)
+static float NeuronSpacing()
+{
+    return EC_NEURON_CIRCLE_RADIUS / 3.0;
+}
+
+EC_NN_Layer *Prefab_Layer(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, Layer *layer)
 {
     // Entity
-    // Generate the entity name using the format: Layer<layer->name>
-    Entity *E_layer = Entity_Create(parent, "Layer", position, rotation, scale, pivot);
+    Entity *E_layer = Entity_Create(parent, "Layer", TS, position, rotation, scale);
     // Neurons
     EC_NN_Neuron **EC_neurons = malloc(sizeof(EC_NN_Neuron *) * layer->neurons_size);
-    float neuronRadius = EC_NEURON_CIRCLE_RADIUS, neuronSpacing = EC_NEURON_CIRCLE_RADIUS / 3.0;
-    // Calculate Y position
-    int y = position.y - EC_Layer_GetHeight(layer->neurons_size) * 0.5;
+    float neuronRadius = EC_NEURON_CIRCLE_RADIUS, neuronSpacing = NeuronSpacing();
+    V3 neuronPos = {0.0, position.y - EC_Layer_GetHeight(layer->neurons_size) * 0.5, 0.0};
     for (int i = 0; i < layer->neurons_size; i++)
     {
-        EC_NN_Neuron *EC_neuron = Prefab_Neuron(E_layer, (V3){position.x, y, position.z}, rotation, V2_ONE, V2_HALF, &layer->neurons[i]);
-        y += neuronRadius * 2 + neuronSpacing;
+        EC_NN_Neuron *EC_neuron = Prefab_Neuron(E_layer, TS_LOCAL, neuronPos, QUATERNION_IDENTITY, V3_ONE, &layer->neurons[i]);
+        neuronPos.y += neuronRadius * 2 + neuronSpacing;
         EC_neurons[i] = EC_neuron;
     }
     // EC_Layer
@@ -33,10 +36,11 @@ EC_NN_Layer *Prefab_Layer(Entity *parent, V3 position, float rotation, V2 scale,
     return EC_layer;
 }
 
-float EC_Layer_GetHeight(size_t neurons_size){
+float EC_Layer_GetHeight(size_t neurons_count)
+{
     float neuronRadius = EC_NEURON_CIRCLE_RADIUS;
-    float neuronSpacing = neuronRadius / 3.0;
-    return neurons_size * (neuronRadius * 2 + neuronSpacing) - neuronSpacing;
+    float neuronSpacing = NeuronSpacing();
+    return neurons_count * (neuronRadius * 2 + neuronSpacing) - neuronSpacing;
 }
 
 void EC_Layer_Free(Component *component)

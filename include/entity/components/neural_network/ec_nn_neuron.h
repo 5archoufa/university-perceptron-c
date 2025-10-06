@@ -4,6 +4,7 @@
 #include "neural_networks/neuron.h"
 #include "entity/entity.h"
 #include "entity/components/renderer/renderer.h"
+#include "entity/transform.h"
 
 typedef struct EC_NN_Neuron EC_NN_Neuron;
 
@@ -16,7 +17,7 @@ struct EC_NN_Neuron
     EC_Renderer *circleRenderer;
 };
 
-EC_NN_Neuron* Prefab_Neuron(Entity* parent, V3 position, float rotation, V2 scale, V2 pivot, Neuron* neuron);
+EC_NN_Neuron *Prefab_Neuron(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, Neuron *neuron);
 EC_NN_Neuron* EC_Neuron_Create(Entity* entity, Neuron* neuron, EC_Renderer *EC_renderer_circle);
 
 #endif

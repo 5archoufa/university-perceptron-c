@@ -1,4 +1,5 @@
 #include "utilities/math/v2.h"
+#include "utilities/math/stupid_math.h"
 #include <math.h>
 
 const V2 V2_ONE = {1.0, 1.0};
@@ -26,7 +27,22 @@ V2 V2_SIZE(V2 *a, V2 *b)
     return (V2){width, height};
 }
 
-V2 V2_MID(V2 *a, V2 *b)
+inline V2 V2_Rand(float magnitude)
+{
+    float angle = RandomFloat(0.0, 2 * M_PI);
+    return (V2){cosf(angle) * magnitude, sinf(angle) * magnitude};
+}
+
+/// @return A unit vector (magnitude of 1) in the direction of (x, y)
+inline V2 V2_Direction(float x, float y){
+    float length = sqrtf(x * x + y * y);
+    if (length == 0){
+        return V2_ZERO;
+    }
+    return (V2){x / length, y / length};
+}
+
+V2 V2_CENTER(V2 *a, V2 *b)
 {
     return (V2){(a->x + b->x) * 0.5, (a->y + b->y) * 0.5};
 }

@@ -3,7 +3,8 @@
 #include "entity/components/renderer/bounds.h"
 #include <stdlib.h>
 
-void Bounds_Setup(Bounds* bounds, V3 position, V2 dimensions){
-    bounds->position = position;
-    bounds->dimensions = dimensions;
+void Bounds_Setup(Bounds* bounds, V3 start, V3 end, V3 size){
+    bounds->start = start;
+    bounds->end = end;
+    bounds->size = size;
 }

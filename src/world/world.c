@@ -1,59 +1,197 @@
 #include "world/world.h"
 #include "logging/logger.h"
+#include "entity/components/lighting/ec_light.h"
 
 static LogConfig _logConfig = {"World", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
 static World **_worlds = NULL;
 static int _worldCount = 0;
 
+// -------------------------
+// Creation and Freeing
+// -------------------------
+
 World *World_Create(char *name)
 {
     World *world = malloc(sizeof(World));
+    // Name
     world->name = name;
+    // Renderers
     world->rendererCount = 0;
     world->renderers = NULL;
-    world->parent = Entity_Create_WorldParent(world, V3_ZERO, 0.0, V2_ONE, V2_HALF);
+    world->rendererCount_3D = 0;
+    world->renderers_3D = NULL;
+    // Lighting
+    world->lights_directional_size = 0;
+    world->lights = NULL;
+    // Entity
+    world->parent = Entity_Create_WorldParent(world, V3_ZERO, QUATERNION_IDENTITY, V3_ONE);
+    // Update Worlds container
     _worldCount++;
-    _worlds = realloc(_worlds, sizeof(World*) * _worldCount);
+    _worlds = realloc(_worlds, sizeof(World *) * _worldCount);
     _worlds[_worldCount - 1] = world;
     return world;
 }
 
-void World_Free(World *world)
+void World_Free(World *world, bool resizeWorlds)
 {
-    LogFree(&_logConfig, "World<%s>", world->name);
+    LogFree(&_logConfig, "World<%s>, Resize List of Worlds<%d>", world->name, resizeWorlds);
+    // Update world count
+    for (int i = 0; i < _worldCount; i++)
+    {
+        if (_worlds[i] == world)
+        {
+            _worldCount--;
+            if (resizeWorlds) // Resize Worlds container
+            {
+                // Shift remaining worlds down
+                for (int j = i; j < _worldCount - 1; j++)
+                {
+                    _worlds[j] = _worlds[j + 1];
+                }
+                _worlds = realloc(_worlds, sizeof(World *) * _worldCount);
+            }
+            break;
+        }
+    }
+    // Free Entities
     Entity_Free(world->parent, false);
+    // Free struct
     free(world->renderers);
+    free(world->renderers_3D);
+    free(world->lights);
     free(world);
 }
 
-void World_FreeAll()
+void World_All_Free()
 {
     LogFree(&_logConfig, "%d Worlds", _worldCount);
     for (int i = 0; i < _worldCount; i++)
     {
-        World_Free(_worlds[i]);
+        World_Free(_worlds[i], false);
     }
     free(_worlds);
 }
 
-void World_AddRenderer(EC_Renderer *renderer)
+// -------------------------
+// Lighting
+// -------------------------
+
+void World_Light_Add(EC_Light *ec_light)
 {
-    World* world = World_Get(renderer->component->entity);
+    Log(&_logConfig, "Adding light to world from entity '%s'", ec_light->component->entity->name);
+    World *world = World_Get(ec_light->component->entity);
+    if (!world)
+    {
+        LogFree(&_logConfig, "Failed to add light to world, entity '%s' has no world", ec_light->component->entity->name);
+        return;
+    }
+
+    world->lights_directional_size++;
+    world->lights = realloc(world->lights, sizeof(EC_Light *) * world->lights_directional_size);
+    world->lights[world->lights_directional_size - 1] = ec_light;
+}
+
+void World_Light_Remove(EC_Light *ec_light)
+{
+    World *world = World_Get(ec_light->component->entity);
+    if (!world)
+    {
+        LogFree(&_logConfig, "Failed to remove light from world, entity '%s' has no world", ec_light->component->entity->name);
+        return;
+    }
+    for (int i = 0; i < world->lights_directional_size; i++)
+    {
+        if (world->lights[i] == ec_light)
+        {
+            world->lights_directional_size--;
+            // Shift remaining lights down
+            for (int j = i; j < world->lights_directional_size; j++)
+            {
+                world->lights[j] = world->lights[j + 1];
+            }
+            world->lights = realloc(world->lights, sizeof(EC_Light *) * world->lights_directional_size);
+            break;
+        }
+    }
+}
+
+// -------------------------
+// 3D Renderers
+// -------------------------
+
+void World_Renderer3D_Add(EC_Renderer3D *ec_renderer3D)
+{
+    World *world = World_Get(ec_renderer3D->component->entity);
+    world->rendererCount_3D++;
+    world->renderers_3D = realloc(world->renderers_3D, sizeof(EC_Renderer3D) * world->rendererCount_3D);
+    world->renderers_3D[world->rendererCount_3D - 1] = ec_renderer3D;
+    printf("Added 3D Renderer to World '%s', total 3D renderers: %d\n", world->name, world->rendererCount_3D);
+}
+
+void World_Renderer3D_Remove(EC_Renderer3D *ec_renderer3D)
+{
+    World *world = World_Get(ec_renderer3D->component->entity);
+    for (int i = 0; i < world->rendererCount_3D; i++)
+    {
+        if (world->renderers_3D[i] == ec_renderer3D)
+        {
+            world->rendererCount_3D--;
+            // Shift remaining renderers down
+            for (int j = i; j < world->rendererCount_3D; j++)
+            {
+                world->renderers_3D[j] = world->renderers_3D[j + 1];
+            }
+            world->renderers_3D = realloc(world->renderers_3D, sizeof(EC_Renderer3D) * world->rendererCount_3D);
+            break;
+        }
+    }
+}
+
+// -------------------------
+// 2D Renderers
+// -------------------------
+
+void World_Renderer_Add(EC_Renderer *renderer)
+{
+    World *world = World_Get(renderer->component->entity);
     world->rendererCount++;
     world->renderers = realloc(world->renderers, sizeof(EC_Renderer) * world->rendererCount);
     world->renderers[world->rendererCount - 1] = renderer;
 }
 
+void World_Renderer_Remove(EC_Renderer *renderer)
+{
+    World *world = World_Get(renderer->component->entity);
+    for (int i = 0; i < world->rendererCount; i++)
+    {
+        if (world->renderers[i] == renderer)
+        {
+            world->rendererCount--;
+            // Shift remaining renderers down
+            for (int j = i; j < world->rendererCount; j++)
+            {
+                world->renderers[j] = world->renderers[j + 1];
+            }
+            world->renderers = realloc(world->renderers, sizeof(EC_Renderer) * world->rendererCount);
+            break;
+        }
+    }
+}
+
+// -------------------------
+// World Management
+// -------------------------
+
 World *World_Get(Entity *entity)
 {
-    Entity *parent = entity;
-    while (parent->parent != NULL)
+    Transform *parentT = entity->transform.parent;
+    while (parentT->parent != NULL)
     {
-        parent = parent->parent;
+        parentT = parentT->parent;
     }
     for (int i = 0; i < _worldCount; i++)
     {
-        if (_worlds[i]->parent == parent)
+        if (_worlds[i]->parent == parentT->entity)
         {
             return _worlds[i];
         }

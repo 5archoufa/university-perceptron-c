@@ -9,75 +9,139 @@
 #include <stdio.h>
 #include "utilities/math/v3.h"
 #include "input/input_manager.h"
-#include <X11/extensions/XInput2.h>
 #include "logging/logger.h"
-#include "entity/entity.h"
 #include "game/game.h"
 #include "state_machine/instances/sm_perceptron/sm_perceptron.h"
 #include <time.h>
+#include <stddef.h> // for offsetof
+#include <math.h>
+#include <cglm/cglm.h>
+#include "utilities/file/file.h"
+// Managers
+#include "rendering/mesh/mesh-manager.h"
+#include "rendering/material/material-manager.h"
+#include "rendering/texture/texture-manager.h"
+#include "rendering/shader/shader-manager.h"
+#include "rendering/shader/shader.h"
+#include "rendering/material/material.h"
+#include "entity/components/ec_renderer3d/ec_renderer3d.h"
+
+// OpenGL
+#define GLFW_INCLUDE_NONE
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 // Constants
 const int UPDATE_RATE_LIMIT = 40;
 const int FIXEDUPDATE_RATE_LIMIT = 40;
+const V3 WORLD_UP = {0, 1, 0};
+const vec3 WORLD_UP_vec3 = {0, 1, 0};
+const V3 WORLD_RIGHT = {1, 0, 0};
+const V3 WORLD_FORWARD = {0, 0, 1};
+const V3 WORLD_DOWN = {0, -1, 0};
+const V3 WORLD_LEFT = {-1, 0, 0};
+const V3 WORLD_BACK = {0, 0, -1};
 // External
+static float _desiredDeltaTime = 1 / (float)UPDATE_RATE_LIMIT;
 float DeltaTime = 1 / (float)UPDATE_RATE_LIMIT;
 float FixedDeltaTime = 1 / (float)FIXEDUPDATE_RATE_LIMIT;
+float PerceptronTime = 0.0f;
+GLuint ShaderProgram;
+// Window configuration - imageWidth/Height is the low-res render target, windowWidth/Height is the actual window size
+MyWindowConfig WindowConfig = {600, 375, 1280, 720};
 
-static LogConfig logConfig = {
+static LogConfig _logConfig = {
     "Perceptron", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
+
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
+{
+    // Update the window config with new dimensions
+    WindowConfig.windowWidth = width;
+    WindowConfig.windowHeight = height;
+
+    // The viewport will be adjusted during BlitToScreen based on aspect ratio
+    glViewport(0, 0, width, height);
+
+    // Log the resize for debugging
+    printf("Window resized to: %dx%d (render target remains: %dx%d)\n",
+           width, height, (int)WindowConfig.imageWidth, (int)WindowConfig.imageHeight);
+}
 
 int main()
 {
+    // Set random seed
+    srand((unsigned int)time(NULL));
     printf("Perceptron: Hello World.\n");
-    // Create Display
-    Display *display = Display_Create();
-    if (display == NULL)
+    // Initialize GLFW
+    if (!glfwInit())
     {
-        printf("Failed to continue without a display.\n");
-        return 1;
+        LogError(&_logConfig, "Failed to initialize GLFW");
+        return -1;
     }
-    // Create Window
-    MyWindowConfig config;
-    config.windowWidth = 1600 * 1.2;
-    config.windowHeight = 900 * 1.2;
-    config.imageWidth = 800;
-    config.imageHeight = 450;
-    MyWindow *myWindow = MyWindow_Create(display, config);
+
+    // Configure GLFW for OpenGL 4.6 Core
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    LogSuccess(&_logConfig, "GLFW initialized successfully for OpenGL 4.6 Core.");
+
+    // Create GLFW window
+    GLFWwindow *window = glfwCreateWindow(WindowConfig.windowWidth, WindowConfig.windowHeight, "Perceptron", NULL, NULL);
+    if (!window)
+    {
+        LogError(&_logConfig, "Failed to create GLFW window");
+        glfwTerminate();
+        return -1;
+    }
+    LogSuccess(&_logConfig, "Window created successfully: %dx%d\n", WindowConfig.windowWidth, WindowConfig.windowHeight);
+    // Make the OpenGL context current
+    glfwMakeContextCurrent(window);
+    LogSuccess(&_logConfig, "OpenGL context made current.\n");
+    // Load OpenGL functions
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        LogError(&_logConfig, "Failed to initialize GLAD\n");
+        return -1;
+    }
+    // Configure OpenGL state
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    // Query actual framebuffer size (may differ from window size on high DPI displays)
+    int actualWidth, actualHeight;
+    glfwGetFramebufferSize(window, &actualWidth, &actualHeight);
+    WindowConfig.windowWidth = actualWidth;
+    WindowConfig.windowHeight = actualHeight;
+    glViewport(0, 0, actualWidth, actualHeight);
+    LogSuccess(&_logConfig, "Framebuffer size: %dx%d\n", actualWidth, actualHeight);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE); // Optional but common
+    glCullFace(GL_BACK);    // Cull back-facing triangles
+    glFrontFace(GL_CCW);    // Counter-clockwise = front
 
     // Input
-    int xi_opcode, xi_event, error;
-    if (!XQueryExtension(display, "XInputExtension", &xi_opcode, &xi_event, &error))
-    {
-        fprintf(stderr, "X Input extension not available.\n");
-        exit(1);
-    }
+    InputManager_Init(window);
+    // Shaders
+    ShaderManager* shaderManager = ShaderManager_Init();
+    ShaderManager_Select(shaderManager);
+    Shader* toonShader = ShaderManager_Get("ToonSolid");
+    // Materials
+    MaterialManager* materialManager = MaterialManager_Create();
+    MaterialManager_Select(materialManager);
+    // Meshes
+    MeshManager* meshManager = MeshManager_Create();
+    MeshManager_Select(meshManager);
+    // Textures
+    TextureManager* textureManager = TextureManager_Create();
+    TextureManager_Select(textureManager);
 
-    // Check XInput2 version
-    int major = 2, minor = 0;
-    if (XIQueryVersion(display, &major, &minor) != Success)
-    {
-        fprintf(stderr, "XInput2 not available.\n");
-        exit(1);
-    }
-    XIEventMask evmask;
-    unsigned char mask[(XI_LASTEVENT + 7) / 8] = {0};
-    evmask.deviceid = XIAllDevices;
-    evmask.mask_len = sizeof(mask);
-    evmask.mask = mask;
-    XISetMask(mask, XI_KeyPress);
-    XISetMask(mask, XI_KeyRelease);
-    XISetMask(mask, XI_ButtonPress);
-    XISetMask(mask, XI_ButtonRelease);
-    XISetMask(mask, XI_Motion);
-    XISelectEvents(display, myWindow->window, &evmask, 1);
-    XFlush(display);
-    InputManager_Init();
+    // Setup default materials
+    Material* renderer3D_defaultMaterial = Material_Create(toonShader, 0, NULL);
+    EC_Renderer3D_SetDefaultMaterial(renderer3D_defaultMaterial);
 
     Game_Awake();
     Game_Start();
-
-    // State Machine
-    // StateMachine* sm_perceptron = SMPerceptron_Init();
 
     double fixedAccumulator = 0.0;
     double updateAccumulator = 0.0;
@@ -89,12 +153,19 @@ int main()
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     double lastTime = ts.tv_sec + ts.tv_nsec * 1e-9;
-    double frameTimer;
+    double frameTimer = 0.0;
     // Infinite Loop
     bool isRunning = true;
     while (isRunning)
     {
-        XEvent event;
+        if (glfwWindowShouldClose(window))
+        {
+            isRunning = false;
+            Log(&_logConfig, "GLFW Window close requested. Exiting Main Loop...");
+            break;
+        }
+
+        glfwPollEvents();
         // Measure Time
         clock_gettime(CLOCK_MONOTONIC, &ts);
         double now = ts.tv_sec + ts.tv_nsec * 1e-9;
@@ -102,63 +173,34 @@ int main()
         lastTime = now;
         fixedAccumulator += time;
         updateAccumulator += time;
-        // Calculate Framerate
-        frameTimer += time;
-        frameCounter++;
-        if (frameTimer >= 1.0)
-        {
-            printf("FPS: %d\n", frameCounter);
-            frameCounter = 0;
-            frameTimer -= 1.0;
-        }
-
-        // Input Events
-            while (XPending(display))
-            {
-                InputManager_ResetInputs();
-                XNextEvent(display, &event);
-                if (XGetEventData(display, &event.xcookie))
-                {
-                    InputManager_HandleXEvent(&event);// Input Events
-            while (XPending(display))
-            {
-                InputManager_ResetInputs();
-                XNextEvent(display, &event);
-                if (XGetEventData(display, &event.xcookie))
-                {
-                    InputManager_HandleXEvent(&event);
-                    XFreeEventData(display, &event.xcookie);
-                }
-                if (event.type == ClientMessage)
-                {
-                    if ((Atom)event.xclient.data.l[0] == myWindow->WM_DELETE)
-                    {
-                        isRunning = false;
-                        Log(&logConfig, "WM_DELETE Called. Exiting Main Loop...");
-                        break;
-                    }
-                }
-            }
-                    XFreeEventData(display, &event.xcookie);
-                }
-                if (event.type == ClientMessage)
-                {
-                    if ((Atom)event.xclient.data.l[0] == myWindow->WM_DELETE)
-                    {
-                        isRunning = false;
-                        Log(&logConfig, "WM_DELETE Called. Exiting Main Loop...");
-                        break;
-                    }
-                }
-            }
-
+        PerceptronTime += time;
         // Update Entities
-        if (updateAccumulator >= DeltaTime)
+        if (updateAccumulator >= _desiredDeltaTime)
         {
-            updateAccumulator -= DeltaTime;
-
+            DeltaTime = updateAccumulator;
+            updateAccumulator -= _desiredDeltaTime;
+            frameCounter++;
+            // Calculate Framerate
+            frameTimer += _desiredDeltaTime;
+            if (frameTimer >= 1.0)
+            {
+                printf("FPS: %d\n", frameCounter);
+                frameCounter = 0;
+                frameTimer -= 1.0;
+            }
+            // Update Loop
             Game_Update();
+            // Late Update Loop
             Game_LateUpdate();
+            glfwSwapBuffers(window);
+            Game_EndOfFrame();
+            // Input
+            InputManager_ResetInputs();
+
+            // End-of-Frame Cleanup
+            MeshManager_Cleanup();
+            MaterialManager_Cleanup();
+            TextureManager_Cleanup();
         }
         while (fixedAccumulator >= FixedDeltaTime && physicsSteps <= maxPhysicsSteps)
         {
@@ -166,27 +208,20 @@ int main()
             Game_FixedUpdate();
             fixedAccumulator -= FixedDeltaTime;
         }
+        // Cleanup
+        
         physicsSteps = 0;
-        // StateMachine_Tick(sm_perceptron);
-
-        // Render
-        // XFlush(myWindow->display);
-
-        // Handle window events
-        if (!MyWindow_Handle(myWindow))
-        {
-            isRunning = false;
-        }
-        else
-        {
-        }
     }
 
-    // Free up memory
+    // Free up other systems
     InputManager_Free();
     Game_Free();
     SMPerceptron_Free();
-    MyWindow_Free(myWindow);
+    // MyWindow_Free(myWindow);
+    // Cleanup GLFW
+    glDeleteProgram(ShaderProgram);
+    glfwDestroyWindow(window);
+    glfwTerminate();
 
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "entity/components/neural_network/ec_nn.h"
 #include "entity/components/neural_network/ec_nn_link.h"
 #include "entity/components/neural_network/ec_nn_neuron.h"
+#include "entity/transform.h"
 
 static EC_NN *EC_NeuralNetwork_Create(Entity *entity, size_t layers_size, EC_NN_Layer **layers)
 {
@@ -20,29 +21,29 @@ void EC_NeuralNetwork_Free(Component *component)
     free(ec_nn);
 }
 
-EC_NN *Prefab_NeuralNetwork(Entity *parent, V3 position, float rotation, V2 scale, V2 pivot, NeuralNetwork *neuralNetwork)
+EC_NN *Prefab_NeuralNetwork(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, NeuralNetwork *neuralNetwork)
 {
-    Entity *e_nn = Entity_Create(parent, "NeuralNetwork", position, rotation, scale, pivot);
+    Entity *e_nn = Entity_Create(parent, "NeuralNetwork", TS, position, rotation, scale);
     EC_NN_Layer **ec_layers = malloc(sizeof(EC_NN_Layer *) * neuralNetwork->layerCount);
     float layerWidth = EC_NEURON_CIRCLE_RADIUS;
     float layerSpacing = layerWidth * 4.0;
     // Calculate X position
-    float x = position.x - 0.5 * (((neuralNetwork->layerCount - 1) * layerSpacing) - (layerWidth * neuralNetwork->layerCount));
     // Calculate Y position
-    float y = -1.0;
+    float tallestLayer = -1.0;
     for (int i = 0; i < neuralNetwork->layerCount; i++)
     {
         float height = EC_Layer_GetHeight(neuralNetwork->layers[i].neurons_size);
-        if (height > y)
+        if (height > tallestLayer)
         {
-            y = height;
+            tallestLayer = height;
         }
     }
-    y = position.y - 0.5 * y;
+    float x = 0.5 * (((neuralNetwork->layerCount - 1) * layerSpacing) - (layerWidth * neuralNetwork->layerCount));
+    V3 layer_LPos = {x, 0.5 * tallestLayer, 0.0};
     // Create Layers
     for (int i = 0; i < neuralNetwork->layerCount; i++)
     {
-        ec_layers[i] = Prefab_Layer(e_nn, (V3){x, y, position.z}, rotation, scale, pivot, &neuralNetwork->layers[i]);
+        ec_layers[i] = Prefab_Layer(e_nn, TS_LOCAL, layer_LPos, QUATERNION_IDENTITY, V3_ONE, &neuralNetwork->layers[i]);
         x += layerWidth + layerSpacing;
     }
     // Create Links
@@ -58,7 +59,7 @@ EC_NN *Prefab_NeuralNetwork(Entity *parent, V3 position, float rotation, V2 scal
             {
                 EC_NN_Neuron *neuronB = ec_layers[lb]->neurons[nb];
                 printf("Weight[%d] is %f\n", na, layerB->neurons[nb].weights[na]);
-                Prefab_NN_Link(e_nn, neuronA, neuronB, position.z, layerB->neurons[nb].weights[na]);
+                Prefab_NN_Link(e_nn, neuronA, neuronB, layerB->neurons[nb].weights[na]);
             }
         }
     }

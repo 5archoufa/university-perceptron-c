@@ -40,6 +40,7 @@ static void PrintName(LogColor color, char* name){
 
 void Log(LogConfig *config, const char *format, ...)
 {
+    if(config->logLevel < LOG_LEVEL_INFO) return;
     PrintName(config->color, config->name);
     va_list args;
     va_start(args, format);
@@ -62,6 +63,7 @@ void LogSuccess(LogConfig *config, const char *format, ...)
 
 void LogWarning(LogConfig *config, const char *format, ...)
 {
+    if(config->logLevel < LOG_LEVEL_WARN) return;
     PrintName(LOG_COLOR_ORANGE, config->name);
     va_list args;
     va_start(args, format);
@@ -73,6 +75,7 @@ void LogWarning(LogConfig *config, const char *format, ...)
 
 void LogError(LogConfig *config, const char *format, ...)
 {
+    if(config->logLevel < LOG_LEVEL_ERROR) return;
     PrintName(LOG_COLOR_RED, config->name);
     va_list args;
     va_start(args, format);
@@ -84,6 +87,7 @@ void LogError(LogConfig *config, const char *format, ...)
 
 void LogFree(LogConfig *config, const char *format, ...)
 {
+    if(config->logLevel < LOG_LEVEL_INFO) return;
     fputs(MSG_FREE_START, stdout);
     PrintName(LOG_COLOR_GRAY, config->name);
     fputs(MSG_FREE_MID, stdout);
@@ -97,6 +101,7 @@ void LogFree(LogConfig *config, const char *format, ...)
 
 void LogCreate(LogConfig *config, const char *format, ...)
 {
+    if(config->logLevel < LOG_LEVEL_INFO) return;
     fputs(MSG_CREATE_START, stdout);
     PrintName(LOG_COLOR_GRAY, config->name);
     fputs(MSG_CREATE_MID, stdout);
@@ -110,6 +115,7 @@ void LogCreate(LogConfig *config, const char *format, ...)
 
 void LogInit(LogConfig *config, const char *format, ...)
 {
+    if(config->logLevel < LOG_LEVEL_INFO) return;
     fputs(MSG_INIT_START, stdout);
     PrintName(LOG_COLOR_BLUE, config->name);
     fputs(MSG_INIT_MID, stdout);

@@ -3,18 +3,18 @@
 #include "neural_networks/neuron.h"
 #include "entity/components/renderer/circle.h"
 #include "entity/components/neural_network/ec_nn_neuron.h"
+#include "entity/transform.h"
 
-const float EC_NEURON_CIRCLE_RADIUS = 30.0;
+const float EC_NEURON_CIRCLE_RADIUS = 1.0;
 
 static void EC_Neuron_Update(Component *component)
 {
     EC_NN_Neuron *ec_neuron = component->self;
-    printf("Neuron pos: %f %f\n", ec_neuron->component->entity->position.x, ec_neuron->component->entity->position.y);
 }
 
-EC_NN_Neuron *Prefab_Neuron(Entity *parent, V3 position, float rotation, V2 scale, V2 pivot, Neuron *neuron)
+EC_NN_Neuron *Prefab_Neuron(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, Neuron *neuron)
 {
-    Entity *E_prefab = Entity_Create(parent, "Neuron", position, rotation, scale, pivot);
+    Entity *E_prefab = Entity_Create(parent, "Neuron", TS, position, rotation, scale);
     EC_Renderer *EC_renderer_circle = RD_Circle_CreateWithRenderer(E_prefab, EC_NEURON_CIRCLE_RADIUS);
     EC_NN_Neuron *EC_neuron = EC_Neuron_Create(E_prefab, neuron, EC_renderer_circle);
     return EC_neuron;

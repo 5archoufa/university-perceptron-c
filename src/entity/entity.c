@@ -7,18 +7,9 @@
 
 static LogConfig _logConfig = {"Entity", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
 
-static void Component_Free(Component *component)
-{
-    if (component != NULL)
-    {
-        component->Free(component);
-    }
-    else
-    {
-        LogWarning(&_logConfig, "Couldn't call Free() on component.self (NULL). Will Ignore.");
-    }
-    free(component);
-}
+// -------------------------
+// Entity Events
+// -------------------------
 
 void Entity_Awake(Entity *entity)
 {
@@ -32,9 +23,9 @@ void Entity_Awake(Entity *entity)
             component->Awake(component);
         }
     }
-    for (int i = 0; i < entity->children_size; i++)
+    for (int i = 0; i < entity->transform.children_size; i++)
     {
-        Entity_Awake(entity->children[i]);
+        Entity_Awake(entity->transform.children[i]->entity);
     }
 }
 
@@ -50,9 +41,9 @@ void Entity_Start(Entity *entity)
             component->Start(component);
         }
     }
-    for (int i = 0; i < entity->children_size; i++)
+    for (int i = 0; i < entity->transform.children_size; i++)
     {
-        Entity_Start(entity->children[i]);
+        Entity_Start(entity->transform.children[i]->entity);
     }
 }
 
@@ -68,9 +59,9 @@ void Entity_Update(Entity *entity)
             component->Update(component);
         }
     }
-    for (int i = 0; i < entity->children_size; i++)
+    for (int i = 0; i < entity->transform.children_size; i++)
     {
-        Entity_Update(entity->children[i]);
+        Entity_Update(entity->transform.children[i]->entity);
     }
 }
 
@@ -86,9 +77,9 @@ void Entity_LateUpdate(Entity *entity)
             component->LateUpdate(component);
         }
     }
-    for (int i = 0; i < entity->children_size; i++)
+    for (int i = 0; i < entity->transform.children_size; i++)
     {
-        Entity_LateUpdate(entity->children[i]);
+        Entity_LateUpdate(entity->transform.children[i]->entity);
     }
 }
 
@@ -104,108 +95,93 @@ void Entity_FixedUpdate(Entity *entity)
             component->FixedUpdate(component);
         }
     }
-    for (int i = 0; i < entity->children_size; i++)
+    for (int i = 0; i < entity->transform.children_size; i++)
     {
-        Entity_FixedUpdate(entity->children[i]);
+        Entity_FixedUpdate(entity->transform.children[i]->entity);
     }
 }
 
-static void Entity_SetParent(Entity *parent, Entity *child)
+// -------------------------
+// Creation
+// -------------------------
+
+Component *Component_Create(void *self,
+                            Entity *entity,
+                            EC_Type type,
+                            void (*Free)(Component *),
+                            void (*Awake)(Component *),
+                            void (*Start)(Component *),
+                            void (*Update)(Component *),
+                            void (*LateUpdate)(Component *),
+                            void (*FixedUpdate)(Component *))
 {
-    child->parent = parent;
-    // Update local transform
-    child->localPos = V3_SUB(&child->position, &parent->position);
-    child->localRot = child->rotation - parent->rotation;
-    child->localScale = V2_DIV(&child->scale, &parent->scale);
-    // Update parent
-    parent->children_size++;
-    parent->children = realloc(parent->children, parent->children_size * sizeof(Entity *));
-    parent->children[parent->children_size - 1] = child;
+    Component *component = malloc(sizeof(Component));
+    component->entity = entity;
+    component->self = self;
+    component->type = type;
+    component->Free = Free;
+    component->Awake = Awake;
+    component->Start = Start;
+    component->Update = Update;
+    component->LateUpdate = LateUpdate;
+    component->FixedUpdate = FixedUpdate;
+    Entity_AddComponent(entity, component);
+    return component;
 }
 
-Entity *Entity_Create(Entity *parent, char *name, V3 position, float rotation, V2 scale, V2 pivot)
+Entity *Entity_Create(Entity *parent, char *name, TransformSpace TS, V3 position, Quaternion rotation, V3 scale)
 {
     LogCreate(&_logConfig, name);
     Entity *entity = malloc(sizeof(Entity));
     entity->name = name;
-    // Transform
-    entity->position = position;
-    entity->rotation = rotation;
-    entity->scale = scale;
-    entity->pivot = pivot;
     // Components
     entity->componentCount = 0;
     entity->component_keys = NULL;
     entity->component_values = NULL;
-    // Children
-    entity->children = NULL;
-    entity->children_size = 0;
-    Entity_SetParent(parent, entity);
-
+    // Transform
+    Transform_Init(&entity->transform, entity, &parent->transform, TS, position, rotation, scale);
     return entity;
 }
 
-Entity *Entity_Create_WorldParent(World *world, V3 position, float rotation, V2 scale, V2 pivot)
+Entity *Entity_Create_WorldParent(World *world, V3 position, Quaternion rotation, V3 scale)
 {
     LogCreate(&_logConfig, "World<%s>'s Parent Entity", world->name);
     Entity *entity = malloc(sizeof(Entity));
     entity->name = world->name;
-    // Transform
-    entity->parent = NULL;
-    entity->position = position;
-    entity->rotation = rotation;
-    entity->scale = scale;
-    entity->pivot = pivot;
-    // Local Transform
-    entity->localPos = V3_ZERO;
-    entity->localRot = 0.0;
-    entity->localScale = V2_ONE;
     // Components
     entity->componentCount = 0;
     entity->component_keys = NULL;
     entity->component_values = NULL;
-    // Children
-    entity->children = NULL;
-    entity->children_size = 0;
-
+    // Transform
+    Transform_Init(&entity->transform, entity, NULL, TS_WORLD, position, rotation, scale);
     return entity;
 }
 
-static void Entity_RemoveChild(Entity *parent, Entity *child)
+// -------------------------
+// Memory Cleanup
+// -------------------------
+
+static void Component_Free(Component *component)
 {
-    if (parent->children_size <= 1)
+    if (component != NULL)
     {
-        parent->children_size = 0;
-        parent->children = NULL;
-        return;
+        component->Free(component);
     }
-    for (int i = 0; i < parent->children_size; i++)
+    else
     {
-        if (parent->children[i] == child)
-        {
-            for (int j = i; j < parent->children_size - 1; j++)
-            {
-                parent->children[j] = parent->children[j + 1];
-            }
-            parent->children_size--;
-            Entity **children = realloc(parent->children, parent->children_size * sizeof(Entity *));
-            if (children != NULL)
-            {
-                parent->children = children;
-            }
-            break;
-        }
+        LogWarning(&_logConfig, "Couldn't call Free() on component.self (NULL). Will Ignore.");
     }
+    free(component);
 }
 
 void Entity_Free(Entity *entity, bool updateParent)
 {
-    LogFree(&_logConfig, "%s (%d Children)", entity->name, entity->children_size);
+    LogFree(&_logConfig, "%s (%d Children)", entity->name, entity->transform.children_size);
     // Remove from parent
-    if (updateParent && entity->parent != NULL)
+    if (updateParent && entity->transform.parent)
     {
-        LogFree(&_logConfig, "Removing %s from its parent %s", entity->name, entity->parent->name);
-        Entity_RemoveChild(entity->parent, entity);
+        LogFree(&_logConfig, "Removing %s from its parent %s", entity->name, entity->transform.parent->entity->name);
+        Transform_RemoveChild(entity->transform.parent, &entity->transform);
     }
     // Free Components
     printf("[%s]:: Will free %d components...\n", entity->name, entity->componentCount);
@@ -216,14 +192,14 @@ void Entity_Free(Entity *entity, bool updateParent)
     free(entity->component_keys);
     free(entity->component_values);
     // Free Children
-    for (int i = 0; i < entity->children_size; i++)
+    for (int i = 0; i < entity->transform.children_size; i++)
     {
-        if (entity->children[i] != NULL)
+        if (entity->transform.children[i] != NULL)
         {
-            Entity_Free(entity->children[i], false);
+            Entity_Free(entity->transform.children[i]->entity, false);
         }
     }
-    free(entity->children);
+    free(entity->transform.children);
     // Free Entity
     free(entity);
 }
@@ -283,63 +259,6 @@ void Entity_AddComponent(Entity *entity, Component *component)
     entity->component_values[entity->componentCount - 1] = component;
 }
 
-void Entity_AddLocalPos(Entity *entity, V3 addition)
-{
-    Entity_SetPos(entity, V3_ADD(&entity->position, &addition));
-}
-
-void Entity_SetLocalPos(Entity *entity, V3 localPos)
-{
-    V3 diff = V3_SUB(&localPos, &entity->localPos);
-    Entity_SetPos(entity, V3_ADD(&entity->position, &diff));
-}
-
-void Entity_AddPos(Entity *entity, V3 addition)
-{
-    Entity_SetPos(entity, V3_ADD(&entity->position, &addition));
-}
-
-void Entity_SetPos(Entity *entity, V3 position)
-{
-    // Update local position
-    V3 diff = V3_SUB(&position, &entity->position);
-    if (entity->parent != NULL)
-    {
-        V3_ADD_FIRST(&entity->localPos, &diff);
-    }
-    for (int i = 0; i < entity->children_size; i++)
-    {
-        Entity_AddPos(entity->children[i], diff);
-    }
-    // Update global position
-    entity->position = position;
-}
-
-// COMPONENTS
-Component *Component_Create(void *self,
-                            Entity *entity,
-                            EC_Type type,
-                            void (*Free)(Component *),
-                            void (*Awake)(Component *),
-                            void (*Start)(Component *),
-                            void (*Update)(Component *),
-                            void (*LateUpdate)(Component *),
-                            void (*FixedUpdate)(Component *))
-{
-    Component *component = malloc(sizeof(Component));
-    component->entity = entity;
-    component->self = self;
-    component->type = type;
-    component->Free = Free;
-    component->Awake = Awake;
-    component->Start = Start;
-    component->Update = Update;
-    component->LateUpdate = LateUpdate;
-    component->FixedUpdate = FixedUpdate;
-    Entity_AddComponent(entity, component);
-    return component;
-}
-
 void Component_SetActive(Component *component, bool isActive)
 {
     if (component->isActive == isActive)
@@ -348,4 +267,89 @@ void Component_SetActive(Component *component, bool isActive)
     }
     component->isActive = isActive;
     component->SetActive(component, isActive);
+}
+
+// -------------------------
+// Getters
+// -------------------------
+
+inline V3 E_WPos(Entity *entity)
+{
+    return T_WPos(&entity->transform);
+}
+inline Quaternion E_WRot(Entity *entity)
+{
+    return T_WRot(&entity->transform);
+}
+inline V3 E_WSca(Entity *entity)
+{
+    return T_WSca(&entity->transform);
+}
+inline V3 E_LPos(Entity *entity)
+{
+    return T_LPos(&entity->transform);
+}
+inline Quaternion E_LRot(Entity *entity)
+{
+    return T_LRot(&entity->transform);
+}
+inline void E_LRot_Mul(Entity *entity, Quaternion q)
+{
+    T_LRot_Mul(&entity->transform, q);
+}
+inline V3 E_LSca(Entity *entity)
+{
+    return T_LSca(&entity->transform);
+}
+
+inline V3 E_Forward(Entity *entity)
+{
+    return T_Forward(&entity->transform);
+}
+inline V3 E_Right(Entity *entity)
+{
+    return T_Right(&entity->transform);
+}
+inline V3 E_Up(Entity *entity)
+{
+    return T_Up(&entity->transform);
+}
+
+inline V3 EC_WPos(Component *component)
+{
+    return T_WPos(&component->entity->transform);
+}
+inline Quaternion EC_WRot(Component *component)
+{
+    return T_WRot(&component->entity->transform);
+}
+inline V3 EC_WSca(Component *component)
+{
+    return T_WSca(&component->entity->transform);
+}
+
+inline V3 EC_LPos(Component *component)
+{
+    return T_LPos(&component->entity->transform);
+}
+inline Quaternion EC_LRot(Component *component)
+{
+    return T_LRot(&component->entity->transform);
+}
+inline V3 EC_LSca(Component *component)
+{
+    return T_LSca(&component->entity->transform);
+}
+
+inline V3 EC_Forward(Component *component)
+{
+    return T_Forward(&component->entity->transform);
+}
+inline V3 EC_Right(Component *component)
+{
+    return T_Right(&component->entity->transform);
+}
+inline V3 EC_Up(Component *component)
+{
+    return T_Up(&component->entity->transform);
 }

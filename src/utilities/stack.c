@@ -1,6 +1,6 @@
 #include "utilities/stack.h"
 
-void FreeStack(Stack *stack)
+void Stack_Free(Stack *stack)
 {
     free(stack->content);
     free(stack);
@@ -44,7 +44,7 @@ void Push(Stack *stack, void *item)
     stack->content[stack->count - 1] = item;
 }
 
-Stack *CreateStack()
+Stack *Stack_Create()
 {
     Stack *stack = malloc(sizeof(Stack));
     stack->count = 0;

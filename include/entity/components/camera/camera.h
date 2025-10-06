@@ -7,22 +7,80 @@
 #include "ui/window.h"
 #include "entity/entity.h"
 #include "entity/components/renderer/bounds.h"
-#include <X11/Xlib.h>
 #include "world/world.h"
+// OpenGL
+#define GLFW_INCLUDE_NONE
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <cglm/cglm.h>
 
 typedef struct EC_Camera EC_Camera;
 
-struct EC_Camera{
-    Component* component;
+extern const int CAMERA_RENDER_MODE_COUNT;
+typedef enum CameraRenderMode
+{
+    CAMERA_RENDER_WIREFRAME,
+    CAMERA_RENDER_SOLID,
+    CAMERA_RENDER_SOLID_WIREFRAME
+} CameraRenderMode;
+
+typedef struct
+{
+    GLuint FBO;
+    GLuint colorTexture;
+    GLuint depthRBO;
+    int width;
+    int height;
+} RenderTarget;
+
+struct EC_Camera
+{
+    Component *component;
     V2 viewport;
-    World* world;
-    XImage* image;
-    float pixelsPerMeter;
-    V3* position;
+    World *world;
+    XImage *image;
+    float pixelsPerUnit;
+    V3 *position;
+    CameraRenderMode renderMode;
+    bool areRulersVisible;
+    RenderTarget *renderTarget;
+    GLuint quadVAO;
+    GLuint quadVBO;
+    // Blitting
+    GLuint boundShaderProgram;
+    GLuint blitShaderProgram;
+    /// Lighting ///
+    // Directional Lights
+    GLint numDirLightsLoc;
+    GLint dirLightDirLoc;
+    GLint dirLightColorLoc;
+    GLint dirLightIntensityLoc;
+    // Point Lights
+    GLint numPointLightsLoc;
+    GLint pointLightPosLoc;
+    GLint pointLightColorLoc;
+    GLint pointLightIntensityLoc;
+    GLint pointLightRangeLoc;
+    // 3D
+    GLint modelLoc;
+    GLint viewLoc;
+    GLint projLoc;
+    GLint textureLoc;
+    GLint useTextureLoc;
+    GLint viewPosLoc;
+    mat4 proj;
+    V3 backward;
+    V3 up;
+    V3 right;
+    float nearClip;
+    float farClip;
+    /// @brief Field of View in Radians
+    float FOV;
 };
 
-EC_Camera *EC_Camera_Create(Entity* entity, XImage* image, V2 viewport);
-void EC_Camera_Free(Component* component);
-V2_INT Camera_WorldToScreen_V2(EC_Camera* EC_camera, V2* position);
-V2_INT Camera_WorldToScreen_V3(EC_Camera* EC_camera, V3* position);
+EC_Camera *EC_Camera_Create(Entity *entity, XImage *image, V2 viewport, float fov, float nearClip, float farClip);
+void EC_Camera_Free(Component *component);
+V2_INT Camera_WorldToScreen_V2(EC_Camera *EC_camera, V2 *position);
+V2_INT Camera_WorldToScreen_V3(EC_Camera *EC_camera, V3 *position);
+void Camera_LookAt(EC_Camera *camera, V3 target);
 #endif

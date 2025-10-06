@@ -13,4 +13,6 @@ void Game_FixedUpdate();
 
 void Game_Free();
 
+void Game_EndOfFrame();
+
 #endif

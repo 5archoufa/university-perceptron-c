@@ -5,6 +5,9 @@
 // Include opaque alpha (0xFF) in constants so Color_Over treats them as fully opaque by default.
 const uint32_t PIXEL_BLACK = 0xFF000000u; // ARGB: opaque black
 const uint32_t PIXEL_WHITE = 0xFFFFFFFFu; // ARGB: opaque white
+const uint32_t PIXEL_RED = 0xFFFF0000u;   // ARGB: opaque red
+const uint32_t PIXEL_GREEN = 0xFF00FF00u; // ARGB: opaque green
+const uint32_t PIXEL_BLUE = 0xFF0000FFu;  // ARGB: opaque blue
 
 void EC_Renderer_Free(Component *component)
 {
@@ -16,6 +19,7 @@ void EC_Renderer_Free(Component *component)
 EC_Renderer *EC_Renderer_Create(Entity *entity,
                                 void *renderData,
                                 void (*Render)(EC_Camera *camera, EC_Renderer *renderer),
+                                void (*Render3D)(EC_Camera *camera, EC_Renderer *renderer, Rect unboundedRect, Rect boundedRect),
                                 void (*renderData_Free)(EC_Renderer *),
                                 void (*UpdateBounds)(EC_Renderer *))
 {
@@ -23,11 +27,13 @@ EC_Renderer *EC_Renderer_Create(Entity *entity,
     renderer->renderData = renderData;
     renderer->renderData_Free = renderData_Free;
     renderer->Render = Render;
-    Bounds_Setup(&renderer->bounds, V3_ZERO, V2_ZERO);
+    renderer->Render3D = Render3D;
+    Bounds_Setup(&renderer->bounds, V3_ZERO, V3_ZERO, V3_ZERO);
     renderer->UpdateBounds = UpdateBounds;
     Component *component = Component_Create(renderer, entity, EC_T_RENDERER, EC_Renderer_Free, NULL, NULL, NULL, NULL, NULL);
     renderer->component = component;
-    World_AddRenderer(renderer);
+    renderer->isVisible = false;
+    World_Renderer_Add(renderer);
     // Update Bounds
     UpdateBounds(renderer);
     return renderer;

@@ -10,13 +10,12 @@
 typedef struct
 {
     EC_Renderer* EC_renderer_line;
-    V2 start;
-    V2 end;
-    float z;
-    float width;
-    uint32_t pixelColor;
+    V3 start;
+    V3 end;
+    float thickness;
+    uint32_t color;
 } RD_Line;
 
-EC_Renderer* RD_Line_CreateWithRenderer(Entity* entity, V2 start, V2 end, float z, float width, uint32_t pixelColor);
+EC_Renderer* RD_Line_CreateWithRenderer(Entity* entity, V3 start, V3 end, float thickness, uint32_t color);
 
 #endif

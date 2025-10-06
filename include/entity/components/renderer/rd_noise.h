@@ -3,6 +3,7 @@
 
 #include "utilities/noise/noise.h"
 #include "entity/components/renderer/renderer.h"
+#include "entity/transform.h"
 
 typedef struct RD_Noise RD_Noise;
 struct RD_Noise
@@ -11,7 +12,7 @@ struct RD_Noise
     Noise *noise;
 };
 
-EC_Renderer *Prefab_Noise(Entity *parent, V3 position, float rotation, V2 scale, V2 pivot, Noise *noise);
-EC_Renderer *RD_Noise_CreateWithRenderer(Entity *entity, Noise *noise);
+// EC_Renderer *EC_Renderer *Prefab_Noise(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, Noise *noise);
+// EC_Renderer *RD_Noise_CreateWithRenderer(Entity *entity, Noise *noise);
 
 #endif

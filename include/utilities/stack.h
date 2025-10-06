@@ -13,9 +13,9 @@ struct Stack
     void *(*Peek)(Stack *stack);
 };
 
-void FreeStack(Stack* stack);
+void Stack_Free(Stack* stack);
 void *Peek(Stack *stack);
 void *Pop(Stack *stack);
 void Push(Stack *stack, void *item);
-Stack *CreateStack();
+Stack *Stack_Create();
 #endif
