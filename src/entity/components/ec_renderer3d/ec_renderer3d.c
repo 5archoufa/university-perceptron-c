@@ -10,6 +10,21 @@
 static Material *_defaultMaterial = NULL;
 
 // -------------------------
+// Entity Events
+// -------------------------
+
+void EC_Renderer3D_Update(Component *component)
+{
+    // component->entity->eulerAngles.y += 0.1f * DeltaTime;
+    // component->entity->eulerAngles.x += 0.05f * DeltaTime;
+    // component->entity->eulerAngles.z += 0.08f * DeltaTime;
+    EC_Renderer3D *renderer = component->self;
+    // component->entity->scale.x = 1.0 + 0.3 * sinf(0.001f * PerceptronTime * DeltaTime);
+    // component->entity->scale.y = 1.0 + 0.3 * sinf(0.001f * PerceptronTime * DeltaTime + 2.0f);
+    // component->entity->scale.z = 1.0 + 0.3 * sinf(0.001f * PerceptronTime * DeltaTime + 4.0f);
+}
+
+// -------------------------
 // Creation and Freeing
 // -------------------------
 
@@ -40,21 +55,6 @@ EC_Renderer3D *EC_Renderer3D_Create(Entity *entity, Mesh *mesh, Material *materi
     ec_renderer3d->component = Component_Create(ec_renderer3d, entity, EC_T_RENDERER3D, EC_Renderer3D_Free, NULL, NULL, EC_Renderer3D_Update, NULL, NULL);
     World_Renderer3D_Add(ec_renderer3d);
     return ec_renderer3d;
-}
-
-// -------------------------
-// Entity Events
-// -------------------------
-
-void EC_Renderer3D_Update(Component *component)
-{
-    // component->entity->eulerAngles.y += 0.1f * DeltaTime;
-    // component->entity->eulerAngles.x += 0.05f * DeltaTime;
-    // component->entity->eulerAngles.z += 0.08f * DeltaTime;
-    EC_Renderer3D *renderer = component->self;
-    // component->entity->scale.x = 1.0 + 0.3 * sinf(0.001f * PerceptronTime * DeltaTime);
-    // component->entity->scale.y = 1.0 + 0.3 * sinf(0.001f * PerceptronTime * DeltaTime + 2.0f);
-    // component->entity->scale.z = 1.0 + 0.3 * sinf(0.001f * PerceptronTime * DeltaTime + 4.0f);
 }
 
 // -------------------------
@@ -99,5 +99,5 @@ EC_Renderer3D *Prefab_Cube(Entity *parent, TransformSpace TS, V3 position, Quate
 {
     Entity *entity = Entity_Create(parent, "Cube", TS, position, rotation, scale);
     Mesh *cubeMesh = Mesh_CreateCube(meshSize);
-    return EC_Renderer3D_Create(entity, cubeMesh, texture);
+    return EC_Renderer3D_Create(entity, cubeMesh, NULL);
 }

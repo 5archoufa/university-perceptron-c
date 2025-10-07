@@ -1,17 +1,17 @@
 #ifndef MESH_MANAGER_H
 #define MESH_MANAGER_H
 
+#include <stddef.h>
+#include "rendering/mesh/mesh.h"
+
 // -------------------------
 // Types
 // -------------------------
 
-typedef struct MeshManager MeshManager;
-typedef struct Mesh Mesh;
-
-struct MeshManager{
+typedef struct {
     size_t meshes_size;
     Mesh **meshes;
-};
+} MeshManager;
 
 // -------------------------
 // Creation and Freeing

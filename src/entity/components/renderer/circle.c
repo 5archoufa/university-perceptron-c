@@ -56,26 +56,6 @@ static void RD_Circle_Render(EC_Camera *camera, EC_Renderer *EC_renderer)
 
 static void RD_Circle_Render3D(EC_Camera *camera, EC_Renderer *EC_renderer, Rect unboundedRectangle, Rect boundedRectangle)
 {
-    // char *pixels = (char *)camera->image->data;
-    uint32_t *pixels = (uint32_t *)camera->image->data;
-    int cameraWidth = camera->image->width;
-    // RD_Circle *circle = EC_renderer->renderData;
-    V2_INT center = {(unboundedRectangle.start.x + unboundedRectangle.end.x) * 0.5,
-                     (unboundedRectangle.start.y + unboundedRectangle.end.y) * 0.5};
-    float radius = unboundedRectangle.size.x * 0.5;
-    for (int y = boundedRectangle.start.y; y < boundedRectangle.end.y; y++)
-    {
-        float dy = (y - center.y);
-        float dx = sqrt((radius * radius) - (dy * dy));
-        for (int x = center.x - dx; x < center.x + dx; x++)
-        {
-            if (IsBetween(x, boundedRectangle.start.x, boundedRectangle.end.x) &&
-                IsBetween(y, boundedRectangle.start.y, boundedRectangle.end.y))
-            {
-                pixels[y * cameraWidth + x] = PIXEL_WHITE;
-            }
-        }
-    }
 }
 
 static void RD_Circle_Free(EC_Renderer *renderer)

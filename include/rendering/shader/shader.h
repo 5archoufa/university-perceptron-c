@@ -18,7 +18,9 @@
 typedef struct Shader Shader;
 typedef struct ShaderProperty ShaderProperty;
 typedef struct ShaderPropertyInstance ShaderPropertyInstance;
+typedef struct ShaderPropBigValue ShaderPropBigValue;
 typedef enum ShaderPropertyType ShaderPropertyType;
+typedef enum ShaderPropertySource ShaderPropertySource;
 
 typedef union
 {
@@ -38,26 +40,45 @@ typedef union
 
 enum ShaderPropertyType
 {
+    /// @brief Small Value (4 Bytes)
     MPT_FLOAT,
+    /// @brief Small Value (8 Bytes)
     MPT_VEC2,
+    /// @brief Small Value (12 Bytes)
     MPT_VEC3,
+    /// @brief Small Value (16 Bytes)
     MPT_VEC4,
+    /// @brief Small Value (4 Bytes)
     MPT_INT,
+    /// @brief Small Value (8 Bytes)
     MPT_IVEC2,
+    /// @brief Small Value (12 Bytes)
     MPT_IVEC3,
+    /// @brief Small Value (16 Bytes)
     MPT_IVEC4,
+    /// @brief Small Value (4 Bytes)
     MPT_UINT,
+    /// @brief Small Value (16 Bytes)
     MPT_MAT2,
+    /// @brief Small Value (36 Bytes)
     MPT_MAT3,
+    /// @brief Small Value (4 Bytes)
+    MPT_SAMPLER2D,
+    /// @brief Big Value (64 Bytes)
     MPT_MAT4,
-    MPT_SAMPLER2D
+};
+
+struct ShaderPropBigValue
+{
+    void *value;
+    size_t size;
 };
 
 struct ShaderPropertyInstance
 {
     int shaderPropIndex;
     ShaderPropSmallValue smallValue;
-    void *bigValue;
+    ShaderPropBigValue bigValue;
 };
 
 struct ShaderProperty
@@ -65,12 +86,11 @@ struct ShaderProperty
     ShaderPropertyType type;
     GLint loc;
     char *name;
-    /// @brief Indicates whether or not a value different from the default has been uploaded previously
-    void *bigValue_previous;
-    ShaderPropSmallValue smallValue_previous;
     bool isBig;
     ShaderPropSmallValue smallValue_default;
-    void *bigValue_default;
+    ShaderPropSmallValue smallValue_previous;
+    ShaderPropBigValue bigValue_default;
+    ShaderPropBigValue bigValue_previous;
 };
 
 struct Shader
@@ -78,6 +98,25 @@ struct Shader
     /// @brief Used to lookup shaders
     char *name;
     GLuint shaderProgram;
+    // ==== Camera Properties ==== //
+    GLuint viewLoc;
+    GLuint projLoc;
+    GLuint viewPosLoc;
+    // ==== Model Properties ==== //
+    GLuint modelLoc;
+    // ==== Lighting Properties ==== //
+    // Directional Lights
+    GLuint dirLightCountLoc;
+    GLuint dirLightDirectionsLoc;
+    GLuint dirLightIntensitiesLoc;
+    GLuint dirLightColorsLoc;
+    // Point Lights
+    GLuint pointLightCountLoc;
+    GLuint pointLightPositionsLoc;
+    GLuint pointLightIntensitiesLoc;
+    GLuint pointLightColorsLoc;
+    GLuint pointLightRangesLoc;
+    // ==== Other Properties ==== //
     size_t properties_size;
     ShaderProperty *properties;
 };
@@ -86,26 +125,25 @@ struct Shader
 // Creation and Freeing
 // -------------------------
 
+Shader *Shader_LoadFromFile(char *name, char *vertexPath, char *fragmentPath, size_t properties_size);
 Shader *Shader_Create(const char *name, const char *vertexSource, const char *fragmentSource,
-                      size_t properties_size, ShaderProperty *properties);
+                      size_t properties_size);
 void Shader_Free(Shader *shader);
 
 // -------------------------
 // Property Initializers
 // -------------------------
-
-void ShaderProperty_InitDefault_Float(ShaderProperty *prop, GLuint program, const char *name, float value);
-void ShaderProperty_InitDefault_Vec2(ShaderProperty *prop, GLuint program, const char *name, vec2 value);
-void ShaderProperty_InitDefault_Vec3(ShaderProperty *prop, GLuint program, const char *name, vec3 value);
-void ShaderProperty_InitDefault_Vec4(ShaderProperty *prop, GLuint program, const char *name, vec4 value);
-void ShaderProperty_InitDefault_Int(ShaderProperty *prop, GLuint program, const char *name, int value);
-void ShaderProperty_InitDefault_IVec2(ShaderProperty *prop, GLuint program, const char *name, ivec2 value);
-void ShaderProperty_InitDefault_IVec3(ShaderProperty *prop, GLuint program, const char *name, ivec3 value);
-void ShaderProperty_InitDefault_IVec4(ShaderProperty *prop, GLuint program, const char *name, ivec4 value);
-void ShaderProperty_InitDefault_UInt(ShaderProperty *prop, GLuint program, const char *name, unsigned int value);
-void ShaderProperty_InitDefault_Mat2(ShaderProperty *prop, GLuint program, const char *name, mat2 value);
-void ShaderProperty_InitDefault_Mat3(ShaderProperty *prop, GLuint program, const char *name, mat3 value);
-void ShaderProperty_InitDefault_Mat4(ShaderProperty *prop, GLuint program, const char *name, mat4 value);
-void ShaderProperty_InitDefault_Sampler2D(ShaderProperty *prop, GLuint program, const char *name, GLuint textureID);
-
+void ShaderProperty_InitDefault_Float(Shader *shader, int propIndex, const char *name, float value);
+void ShaderProperty_InitDefault_Vec2(Shader *shader, int propIndex, const char *name, vec2 value);
+void ShaderProperty_InitDefault_Vec3(Shader *shader, int propIndex, const char *name, vec3 value);
+void ShaderProperty_InitDefault_Vec4(Shader *shader, int propIndex, const char *name, vec4 value);
+void ShaderProperty_InitDefault_Int(Shader *shader, int propIndex, const char *name, int value);
+void ShaderProperty_InitDefault_IVec2(Shader *shader, int propIndex, const char *name, ivec2 value);
+void ShaderProperty_InitDefault_IVec3(Shader *shader, int propIndex, const char *name, ivec3 value);
+void ShaderProperty_InitDefault_IVec4(Shader *shader, int propIndex, const char *name, ivec4 value);
+void ShaderProperty_InitDefault_UInt(Shader *shader, int propIndex, const char *name, unsigned int value);
+void ShaderProperty_InitDefault_Mat2(Shader *shader, int propIndex, const char *name, mat2 value);
+void ShaderProperty_InitDefault_Mat3(Shader *shader, int propIndex, const char *name, mat3 value);
+void ShaderProperty_InitDefault_Mat4(Shader *shader, int propIndex, const char *name, mat4 value);
+void ShaderProperty_InitDefault_Sampler2D(Shader *shader, int propIndex, const char *name, GLuint textureID);
 #endif

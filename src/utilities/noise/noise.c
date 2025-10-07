@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <math.h>
-#include "geometry/texture.h"
+#include "rendering/texture/texture.h"
 #include "entity/components/renderer/renderer.h"
 
 typedef enum

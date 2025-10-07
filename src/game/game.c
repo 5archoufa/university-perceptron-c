@@ -22,18 +22,13 @@
 #include "utilities/math/stupid_math.h"
 #include "entity/components/ec_renderer3d/ec_renderer3d.h"
 #include "entity/components/ec_water/ec_water.h"
-#include "entity/components/lighting/ls_directional_light.h"
+#include "entity/components/lighting/ls_directional.h"
 #include "entity/components/lighting/ec_light.h"
 #include "entity/components/ec_planet/ec_planet.h"
 
 static World *_world;
 static NeuralNetwork *_neuralNetwork;
 static EC_Camera *_ec_camera;
-
-static void CompileShaders(){
-    // Solid Toon
-    char *vertexSource = File_LoadStr("src/shader/solid_toon_vertex.glsl");
-}
 
 void Game_Awake()
 {
@@ -44,7 +39,7 @@ void Game_Awake()
     Quaternion cameraRotation = Quat_FromEuler((V3){-30, 0, 0});
     Entity *E_camera = Entity_Create(_world->parent, "Main Camera", TS_WORLD, cameraPosition, cameraRotation, V3_ONE);
     // Use imageWidth/imageHeight for low-res pixel art render target
-    _ec_camera = EC_Camera_Create(E_camera, NULL, (V2){WindowConfig.imageWidth, WindowConfig.imageHeight}, Radians(60.0f), 0.1f, 2000.0f);
+    _ec_camera = EC_Camera_Create(E_camera, (V2){WindowConfig.imageWidth, WindowConfig.imageHeight}, Radians(60.0f), 0.1f, 2000.0f);
     EC_CameraController_Create(E_camera, _ec_camera, (V3){30.0, 30.0, 30.0});
 
     // NeuralNetwork

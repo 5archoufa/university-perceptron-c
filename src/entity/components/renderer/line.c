@@ -43,43 +43,6 @@ static inline void SetThickPixel(uint32_t *pixels, int x, int y, Rect* boundary,
 
 static void RD_Line_Render3D(EC_Camera *camera, EC_Renderer *renderer, Rect unboundedRectangle, Rect boundedRectangle)
 {
-    // Image data
-    uint32_t *pixels = (uint32_t *)camera->image->data;
-
-    // Line data
-    RD_Line *line = (RD_Line *)renderer->renderData;
-    int startX = unboundedRectangle.start.x;
-    int startY = unboundedRectangle.start.y;
-    int endX = unboundedRectangle.end.x;
-    int endY = unboundedRectangle.end.y;
-
-    // Draw line using Bresenham's line algorithm
-    int dx = abs(endX - startX);
-    int dy = abs(endY - startY);
-    int sx = startX < endX ? 1 : -1;
-    int sy = startY < endY ? 1 : -1;
-    int err = dx - dy;
-    while (true)
-    {
-        if (IsBetween(startX, boundedRectangle.start.x, boundedRectangle.end.x) && IsBetween(startY, boundedRectangle.start.y, boundedRectangle.end.y))
-        {
-            //SetThickPixel(pixels, startX, startY, &boundedRectangle, 1, line->pixelColor);
-            pixels[startY * camera->image->width + startX] = Color_Over(line->color, pixels[startY * camera->image->width + startX]);
-        }
-        if (startX == endX && startY == endY)
-            break;
-        int err2 = err * 2;
-        if (err2 >= -dy)
-        {
-            err -= dy;
-            startX += sx;
-        }
-        if (err2 < dx)
-        {
-            err += dx;
-            startY += sy;
-        }
-    }
 }
 
 static void RD_Line_Render(EC_Camera *camera, EC_Renderer *renderer)

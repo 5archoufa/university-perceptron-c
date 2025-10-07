@@ -24,9 +24,12 @@ struct World
     // 3D Renderers
     int rendererCount_3D;
     EC_Renderer3D **renderers_3D;
-    // Lights
+    // Directional Lights
     size_t lights_directional_size;
-    EC_Light **lights;
+    EC_Light **lights_directional;
+    // Point Lights
+    size_t lights_point_size;
+    EC_Light **lights_point;
 };
 
 // -------------------------

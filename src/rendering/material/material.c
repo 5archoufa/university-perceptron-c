@@ -1,99 +1,20 @@
 #include "rendering/material/material.h"
+#include "rendering/material/material-manager.h"
 #include "rendering/shader/shader.h"
+// C
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+// Logging
 #include "logging/logger.h"
-#include "rendering/material/material-manager.h"
-
 // OpenGL
 #define GLFW_INCLUDE_NONE
 #include <glad/glad.h>
 #include <cglm/cglm.h>
 
 static LogConfig _logConfig = {"Material", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
-
-// -------------------------
-// Utilities
-// -------------------------
-
-static inline ShaderPropSmallValue GetSmallValue(Shader *shader, Material *material, int i, int *j, bool *mustUpload)
-{
-    ShaderPropSmallValue value;
-    if (*j < material->instanceProps_size && i == material->instanceProps[*j].shaderPropIndex) // Use instance value
-    {
-        (*j)++;
-        value = material->instanceProps[*j - 1].smallValue;
-    }
-    else // Use shader default value
-    {
-        value = shader->properties[i].smallValue_default;
-    }
-    // ChatGPT, implement proper checking for every ShaderPropSmallValue type and update mustUpload accordingly
-    ShaderProperty *prop = &shader->properties[i];
-    switch (prop->type)
-    {
-    case MPT_FLOAT:
-        *mustUpload = (value.floatValue != prop->smallValue_previous.floatValue);
-        break;
-    case MPT_VEC2:
-        *mustUpload = memcmp(&value.vec2Value, &prop->smallValue_previous.vec2Value, sizeof(vec2)) != 0;
-        break;
-    case MPT_VEC3:
-        *mustUpload = memcmp(&value.vec3Value, &prop->smallValue_previous.vec3Value, sizeof(vec3)) != 0;
-        break;
-    case MPT_VEC4:
-        *mustUpload = memcmp(&value.vec4Value, &prop->smallValue_previous.vec4Value, sizeof(vec4)) != 0;
-        break;
-    case MPT_INT:
-        *mustUpload = (value.intValue != prop->smallValue_previous.intValue);
-        break;
-    case MPT_IVEC2:
-        *mustUpload = memcmp(&value.ivec2Value, &prop->smallValue_previous.ivec2Value, sizeof(ivec2)) != 0;
-        break;
-    case MPT_IVEC3:
-        *mustUpload = memcmp(&value.ivec3Value, &prop->smallValue_previous.ivec3Value, sizeof(ivec3)) != 0;
-        break;
-    case MPT_IVEC4:
-        *mustUpload = memcmp(&value.ivec4Value, &prop->smallValue_previous.ivec4Value, sizeof(ivec4)) != 0;
-        break;
-    case MPT_UINT:
-        *mustUpload = (value.uintValue != prop->smallValue_previous.uintValue);
-        break;
-    case MPT_MAT2:
-        *mustUpload = memcmp(&value.mat2Value, &prop->smallValue_previous.mat2Value, sizeof(mat2)) != 0;
-        break;
-    case MPT_MAT3:
-        *mustUpload = memcmp(&value.mat3Value, &prop->smallValue_previous.mat3Value, sizeof(mat3)) != 0;
-        break;
-    case MPT_SAMPLER2D:
-        *mustUpload = (value.sampler2DValue != prop->smallValue_previous.sampler2DValue);
-        break;
-    default:
-        LogError(&_logConfig, "Unsupported ShaderPropertyType %d", prop->type);
-        *mustUpload = false;
-        break;
-    }
-    return value;
-}
-
-static inline void *GetBigValue(Shader *shader, Material *material, int i, int *j, bool *mustUpload)
-{
-    void *value;
-    if (*j < material->instanceProps_size && i == material->instanceProps[*j].shaderPropIndex) // Use instance value
-    {
-        (*j)++;
-        value = material->instanceProps[*j - 1].bigValue;
-    }
-    else // Use shader default value
-    {
-        value = shader->properties[i].bigValue_default;
-    }
-    *mustUpload = value != shader->properties[i].bigValue_previous;
-    return value;
-}
 
 // -------------------------
 // Creation and Freeing
@@ -175,7 +96,8 @@ static ShaderPropertyInstance *Material_AddPropInstance(Material *material, char
         }
     }
     material->instanceProps[materialPropIndex].shaderPropIndex = shaderPropIndex;
-    material->instanceProps[materialPropIndex].bigValue = NULL;
+    material->instanceProps[materialPropIndex].bigValue.size = 0;
+    material->instanceProps[materialPropIndex].bigValue.value = NULL;
     return &material->instanceProps[materialPropIndex];
 }
 
@@ -320,11 +242,11 @@ void Material_SetMat4(Material *material, char *name, mat4 value)
         LogError(&_logConfig, "Failed to set mat4 property '%s' on material, no such property in shader '%s'", name, material->shader->name);
         return;
     }
-    if (!propInstance->bigValue)
+    if (propInstance->bigValue.value)
     {
-        propInstance->bigValue = malloc(sizeof(mat4));
+        propInstance->bigValue.value = malloc(propInstance->bigValue.size);
     }
-    memcpy(propInstance->bigValue, value, sizeof(mat4));
+    memcpy(propInstance->bigValue.value, value, propInstance->bigValue.size);
 }
 
 void Material_SetTexture(Material *material, char *name, GLuint textureID)

@@ -102,7 +102,9 @@
         "island.h": "c",
         "mesh.h": "c",
         "texture-manager.h": "c",
-        "shader-manager.h": "c"
+        "shader-manager.h": "c",
+        "math.h": "c",
+        "ls_point.h": "c"
     },
     "makefile.configureOnOpen": false
 }

@@ -1,4 +1,6 @@
 #include "rendering/texture/texture.h"
+#include "rendering/texture/texture-manager.h"
+// C
 #include <stdlib.h>
 #include <stdio.h>
 

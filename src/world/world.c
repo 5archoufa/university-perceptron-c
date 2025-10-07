@@ -20,9 +20,12 @@ World *World_Create(char *name)
     world->renderers = NULL;
     world->rendererCount_3D = 0;
     world->renderers_3D = NULL;
-    // Lighting
+    // Directional Lights
     world->lights_directional_size = 0;
-    world->lights = NULL;
+    world->lights_directional = NULL;
+    // Point Lights
+    world->lights_point_size = 0;
+    world->lights_point = NULL;
     // Entity
     world->parent = Entity_Create_WorldParent(world, V3_ZERO, QUATERNION_IDENTITY, V3_ONE);
     // Update Worlds container
@@ -58,7 +61,7 @@ void World_Free(World *world, bool resizeWorlds)
     // Free struct
     free(world->renderers);
     free(world->renderers_3D);
-    free(world->lights);
+    free(world->lights_directional);
     free(world);
 }
 
@@ -86,9 +89,22 @@ void World_Light_Add(EC_Light *ec_light)
         return;
     }
 
-    world->lights_directional_size++;
-    world->lights = realloc(world->lights, sizeof(EC_Light *) * world->lights_directional_size);
-    world->lights[world->lights_directional_size - 1] = ec_light;
+    switch (ec_light->type)
+    {
+    case LS_T_DIRECTIONAL:
+        world->lights_directional_size++;
+        world->lights_directional = realloc(world->lights_directional, sizeof(EC_Light *) * world->lights_directional_size);
+        world->lights_directional[world->lights_directional_size - 1] = ec_light;
+        break;
+    case LS_T_POINT:
+        world->lights_point_size++;
+        world->lights_point = realloc(world->lights_point, sizeof(EC_Light *) * world->lights_point_size);
+        world->lights_point[world->lights_point_size - 1] = ec_light;
+        break;
+    default:
+        LogError(&_logConfig, "A light source (%s) of an unknown type has been added to the world. It will not be buffered nor considered in rendering.", ec_light->component->entity->name);
+        break;
+    }
 }
 
 void World_Light_Remove(EC_Light *ec_light)
@@ -99,19 +115,42 @@ void World_Light_Remove(EC_Light *ec_light)
         LogFree(&_logConfig, "Failed to remove light from world, entity '%s' has no world", ec_light->component->entity->name);
         return;
     }
-    for (int i = 0; i < world->lights_directional_size; i++)
+    switch (ec_light->type)
     {
-        if (world->lights[i] == ec_light)
+    case LS_T_DIRECTIONAL:
+        for (int i = 0; i < world->lights_directional_size; i++)
         {
-            world->lights_directional_size--;
-            // Shift remaining lights down
-            for (int j = i; j < world->lights_directional_size; j++)
+            if (world->lights_directional[i] == ec_light)
             {
-                world->lights[j] = world->lights[j + 1];
+                world->lights_directional_size--;
+                // Shift remaining lights down
+                for (int j = i; j < world->lights_directional_size; j++)
+                {
+                    world->lights_directional[j] = world->lights_directional[j + 1];
+                }
+                world->lights_directional = realloc(world->lights_directional, sizeof(EC_Light *) * world->lights_directional_size);
+                break;
             }
-            world->lights = realloc(world->lights, sizeof(EC_Light *) * world->lights_directional_size);
-            break;
         }
+        break;
+    case LS_T_POINT:
+        for (int i = 0; i < world->lights_point_size; i++)
+        {
+            if (world->lights_point[i] == ec_light)
+            {
+                world->lights_point_size--;
+                // Shift remaining lights down
+                for (int j = i; j < world->lights_point_size; j++)
+                {
+                    world->lights_point[j] = world->lights_point[j + 1];
+                }
+                world->lights_point = realloc(world->lights_point, sizeof(EC_Light *) * world->lights_point_size);
+                break;
+            }
+        }
+        break;
+    default:
+        break;
     }
 }
 

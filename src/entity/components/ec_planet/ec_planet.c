@@ -1,6 +1,6 @@
 #include "entity/components/ec_planet/ec_planet.h"
 #include "entity/entity.h"
-#include "entity/components/lighting/ls_directional_light.h"
+#include "entity/components/lighting/ls_directional.h"
 #include <stdint.h>
 #include "perceptron.h"
 
@@ -18,7 +18,7 @@ static void EC_Planet_Update(Component *component)
     T_LRot_Add(&component->entity->transform, addition);
 }
 
-static EC_Planet *EC_Planet_Create(Entity *entity, V3 rotationSpeed, LS_DirectionalLight *ls_directionalLight)
+static EC_Planet *EC_Planet_Create(Entity *entity, V3 rotationSpeed, LS_Directional *ls_directionalLight)
 {
     EC_Planet *ec_planet = malloc(sizeof(EC_Planet));
     ec_planet->rotationSpeed = rotationSpeed;
@@ -36,6 +36,6 @@ EC_Planet *Prefab_Planet(Entity *parent, V3 rotationSpeed, uint32_t color, float
     Entity *e_cube = Prefab_Cube(entity, TS_LOCAL, V3_ZERO, QUATERNION_IDENTITY, V3_ONE, 50, NULL)->component->entity;
     // Directional Light
     EC_Light *ec_light = Prefab_DirectionalLight(entity, TS_LOCAL, V3_ZERO, QUATERNION_IDENTITY, V3_ONE, intensity, color);
-    EC_Planet *ec_planet = EC_Planet_Create(entity, rotationSpeed, (LS_DirectionalLight *)ec_light->lightSource);
+    EC_Planet *ec_planet = EC_Planet_Create(entity, rotationSpeed, (LS_Directional *)ec_light->lightSource);
     return ec_planet;
 }

@@ -2,7 +2,7 @@
 #define EC_PLANET_H
 
 #include "entity/entity.h"
-#include "entity/components/lighting/ls_directional_light.h"
+#include "entity/components/lighting/ls_directional.h"
 #include "entity/components/lighting/ec_light.h"
 #include <stdint.h>
 
@@ -12,7 +12,7 @@ struct EC_Planet
 {
     Component *component;
     EC_Light *ec_light;
-    LS_DirectionalLight *ls_directionalLight;
+    LS_Directional *ls_directionalLight;
     V3 rotationSpeed;
 };
 

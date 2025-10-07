@@ -1,5 +1,5 @@
-#include "rendering/mesh/mesh-manager.h"
 #include "rendering/mesh/mesh.h"
+#include "rendering/mesh/mesh-manager.h"
 
 #include <stdlib.h>
 

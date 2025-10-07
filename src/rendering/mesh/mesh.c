@@ -1,4 +1,6 @@
 #include "rendering/mesh/mesh.h"
+#include "rendering/mesh/mesh-manager.h"
+// C
 #include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>

@@ -1,6 +1,8 @@
 #ifndef MATERIAL_MANAGER_H
 #define MATERIAL_MANAGER_H
 
+#include <stddef.h>
+
 // -------------------------
 // Types
 // -------------------------

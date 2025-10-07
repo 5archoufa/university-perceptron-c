@@ -123,7 +123,7 @@ int main()
     // Input
     InputManager_Init(window);
     // Shaders
-    ShaderManager* shaderManager = ShaderManager_Init();
+    ShaderManager* shaderManager = ShaderManager_Create();
     ShaderManager_Select(shaderManager);
     Shader* toonShader = ShaderManager_Get("ToonSolid");
     // Materials
