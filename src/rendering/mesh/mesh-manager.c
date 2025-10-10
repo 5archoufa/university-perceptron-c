@@ -52,6 +52,7 @@ void MeshManager_Cleanup()
 {
     for (int i = 0; i < _manager->meshes_size; i++)
     {
+        if(_manager->meshes[i] == NULL) continue;
         if (_manager->meshes[i]->refCount <= 0)
         {
             Mesh_Free(_manager->meshes[i]);

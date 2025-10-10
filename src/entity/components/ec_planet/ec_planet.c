@@ -16,6 +16,7 @@ static void EC_Planet_Update(Component *component)
     // Rotate Planet
     V3 addition = V3_SCALE(ec_planet->rotationSpeed, DeltaTime);
     T_LRot_Add(&component->entity->transform, addition);
+    printf("Planet Rotation: (%.2f, %.2f, %.2f)\n", component->entity->transform.l_rot.x, component->entity->transform.l_rot.y, component->entity->transform.l_rot.z);
 }
 
 static EC_Planet *EC_Planet_Create(Entity *entity, V3 rotationSpeed, LS_Directional *ls_directionalLight)
@@ -29,11 +30,11 @@ static EC_Planet *EC_Planet_Create(Entity *entity, V3 rotationSpeed, LS_Directio
     return ec_planet;
 }
 
-EC_Planet *Prefab_Planet(Entity *parent, V3 rotationSpeed, uint32_t color, float intensity)
+EC_Planet *Prefab_Planet(Entity *parent, V3 rotationSpeed, uint32_t color, float intensity, float timeOfDay)
 {
-    Entity *entity = Entity_Create(parent, "Planet", TS_WORLD, (V3){0, 100, 0}, QUATERNION_IDENTITY, V3_ONE);
-    // Create cube
-    Entity *e_cube = Prefab_Cube(entity, TS_LOCAL, V3_ZERO, QUATERNION_IDENTITY, V3_ONE, 50, NULL)->component->entity;
+    // Calculate rotation based off time of day
+    Quaternion rotation = Quat_FromEuler((V3){(timeOfDay / 24.0f) * 360.0f - 90.0f, -45.0f, 0});
+    Entity *entity = Entity_Create(parent, "Planet", TS_WORLD, (V3){0, 100, 0}, rotation, V3_ONE);
     // Directional Light
     EC_Light *ec_light = Prefab_DirectionalLight(entity, TS_LOCAL, V3_ZERO, QUATERNION_IDENTITY, V3_ONE, intensity, color);
     EC_Planet *ec_planet = EC_Planet_Create(entity, rotationSpeed, (LS_Directional *)ec_light->lightSource);

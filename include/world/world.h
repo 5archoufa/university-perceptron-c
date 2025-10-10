@@ -30,10 +30,13 @@ struct World
     // Point Lights
     size_t lights_point_size;
     EC_Light **lights_point;
+    // Tracking
+    /// @brief Whether or not this world is marked for freeing
+    bool isMarkedForFreeing;
 };
 
 // -------------------------
-// Creationg and Freeing
+// Creation and Freeing
 // -------------------------
 
 World *World_Create(char *name);

@@ -48,11 +48,12 @@ struct EC_Camera
     /// @brief Field of View in Radians
     float FOV;
     // Blitting
-    GLuint boundShaderProgram;
     GLuint blitShaderProgram;
+    GLuint blitScreenTextureLoc;
     GLuint quadVAO;
     GLuint quadVBO;
     // Cache
+    GLuint boundShaderProgram;
     mat4 proj;
     V3 backward;
     V3 up;

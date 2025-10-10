@@ -22,6 +22,7 @@ V2 V2_SUB(V2 *a, V2 *b);
 V2 V2_DIV(V2 *a, V2 *b);
 V2 V2_SIZE(V2 *a, V2 *b);
 V2 V2_CENTER(V2 *a, V2 *b);
+V2 V2_NORM(V2 a);
 float V2_DOT(V2 *a, V2 *b);
 float V2_INT_DOT(V2_INT *a, V2_INT *b);
 float V2_MAGNITUDE(V2 *a);

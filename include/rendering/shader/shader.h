@@ -98,24 +98,9 @@ struct Shader
     /// @brief Used to lookup shaders
     char *name;
     GLuint shaderProgram;
-    // ==== Camera Properties ==== //
-    GLuint viewLoc;
-    GLuint projLoc;
-    GLuint viewPosLoc;
     // ==== Model Properties ==== //
+    mat4 model;
     GLuint modelLoc;
-    // ==== Lighting Properties ==== //
-    // Directional Lights
-    GLuint dirLightCountLoc;
-    GLuint dirLightDirectionsLoc;
-    GLuint dirLightIntensitiesLoc;
-    GLuint dirLightColorsLoc;
-    // Point Lights
-    GLuint pointLightCountLoc;
-    GLuint pointLightPositionsLoc;
-    GLuint pointLightIntensitiesLoc;
-    GLuint pointLightColorsLoc;
-    GLuint pointLightRangesLoc;
     // ==== Other Properties ==== //
     size_t properties_size;
     ShaderProperty *properties;

@@ -300,8 +300,14 @@ static NoiseLayer *NoiseLayer_Get(Noise *noise, size_t layers_size, const NoiseL
     return &layers[lowestLayer];
 }
 
-Mesh *Noise_CreateMesh(Noise *noise, V3 meshScale, int layers_size, const NoiseLayer *layers, bool usePixelColors, Texture *texture, int density)
+Mesh *Noise_CreateMesh(Noise *noise, V3 meshScale, int layers_size, const NoiseLayer *layers, bool usePixelColors, Texture *texture, int density, V3 pivot)
 {
+    float dx = meshScale.x / (float)noise->width;
+    float dy = meshScale.y / (float)(noise->max - noise->min);
+    float dz = meshScale.z / (float)noise->height;
+    float xOffset = -pivot.x * meshScale.x;
+    float yOffset = -pivot.y * meshScale.y;
+    float zOffset = -pivot.z * meshScale.z;
     int noise_width = noise->width, noise_height = noise->height;
     // Vertices
     uint32_t vertices_size = noise->width * noise->height;
@@ -318,10 +324,10 @@ Mesh *Noise_CreateMesh(Noise *noise, V3 meshScale, int layers_size, const NoiseL
         for (int x = 0; x < noise_width; x++)
         {
             vertices[y * noise_width + x].position = (V3){
-                x * meshScale.x,
-                noise->map[x][y] * meshScale.y,
-                y * meshScale.z};
-            
+                x * dx + xOffset,
+                noise->map[x][y] * dy + yOffset,
+                y * dz + zOffset};
+
             // Compute normals using central differences (much more accurate)
             float hL = (x > 0) ? noise->map[x - 1][y] : noise->map[x][y];
             float hR = (x < noise_width - 1) ? noise->map[x + 1][y] : noise->map[x][y];
@@ -418,6 +424,6 @@ Mesh *Noise_CreateMesh(Noise *noise, V3 meshScale, int layers_size, const NoiseL
             indices[index++] = yw + (x + 1);
         }
     }
-    Mesh *mesh = Mesh_Create(vertices_size, vertices, indices_size, indices, V3_ZERO);
+    Mesh *mesh = Mesh_Create(vertices_size, vertices, indices_size, indices, pivot);
     return mesh;
 }

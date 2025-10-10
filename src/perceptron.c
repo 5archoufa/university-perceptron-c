@@ -32,7 +32,7 @@
 #include <GLFW/glfw3.h>
 
 // Constants
-const int UPDATE_RATE_LIMIT = 40;
+const int UPDATE_RATE_LIMIT = 60;
 const int FIXEDUPDATE_RATE_LIMIT = 40;
 const V3 WORLD_UP = {0, 1, 0};
 const vec3 WORLD_UP_vec3 = {0, 1, 0};
@@ -125,7 +125,7 @@ int main()
     // Shaders
     ShaderManager* shaderManager = ShaderManager_Create();
     ShaderManager_Select(shaderManager);
-    Shader* toonShader = ShaderManager_Get("ToonSolid");
+    Shader* toonShader = ShaderManager_Get(SHADER_TOON_SOLID);
     // Materials
     MaterialManager* materialManager = MaterialManager_Create();
     MaterialManager_Select(materialManager);
@@ -174,6 +174,7 @@ int main()
         fixedAccumulator += time;
         updateAccumulator += time;
         PerceptronTime += time;
+        frameTimer += time;
         // Update Entities
         if (updateAccumulator >= _desiredDeltaTime)
         {
@@ -181,7 +182,6 @@ int main()
             updateAccumulator -= _desiredDeltaTime;
             frameCounter++;
             // Calculate Framerate
-            frameTimer += _desiredDeltaTime;
             if (frameTimer >= 1.0)
             {
                 printf("FPS: %d\n", frameCounter);

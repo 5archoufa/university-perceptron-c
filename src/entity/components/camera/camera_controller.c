@@ -37,11 +37,13 @@ static void EC_CameraController_LateUpdate(Component *component)
     if (input->keys[INPUT_FORWARD].isDown)
     {
         V3 forward = EC_Forward(component);
+        forward.y = 0;
         T_LPos_Add(&component->entity->transform, V3_SCALE(forward, cameraController->speed.z * DeltaTime));
     }
     if (input->keys[INPUT_BACKWARD].isDown)
     {
         V3 forward = EC_Forward(component);
+        forward.y = 0;
         T_LPos_Add(&component->entity->transform, V3_SCALE(forward, -cameraController->speed.z * DeltaTime));
     }
     if (input->keys[INPUT_UP].isDown)

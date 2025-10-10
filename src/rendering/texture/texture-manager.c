@@ -52,6 +52,7 @@ void TextureManager_Cleanup()
 {
     for (int i = 0; i < _manager->textures_size; i++)
     {
+        if(_manager->textures[i] == NULL) continue;
         if (_manager->textures[i] && _manager->textures[i]->refCount <= 0)
         {
             Texture_Free(_manager->textures[i]);

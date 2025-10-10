@@ -5,80 +5,33 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
+// Logging
+#include "logging/logger.h"
 
-static const uint32_t _CUBE_INDICES[36] = {
-    // Each face uses counter-clockwise winding when viewed from outside
-    0, 3, 2, 2, 1, 0, // back face  (Z-)
-    4, 5, 6, 6, 7, 4, // front face (Z+)
-    4, 0, 1, 1, 5, 4, // bottom face (Y-)
-    6, 2, 3, 3, 7, 6, // top face (Y+)
-    4, 7, 3, 3, 0, 4, // left face (X-)
-    1, 2, 6, 6, 5, 1  // right face (X+)
-};
-static const V3 _CUBE_VERTICES[8] = {
-    {-0.5f, -0.5f, -0.5f},
-    {0.5f, -0.5f, -0.5f},
-    {0.5f, 0.5f, -0.5f},
-    {-0.5f, 0.5f, -0.5f},
-    {-0.5f, -0.5f, 0.5f},
-    {0.5f, -0.5f, 0.5f},
-    {0.5f, 0.5f, 0.5f},
-    {-0.5f, 0.5f, 0.5f}};
+// -------------------------
+// Static
+// -------------------------
+
+static LogConfig _logConfig = {"Mesh", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
+
+// -------------------------
+// Creation & Freeing
+// -------------------------
 
 void Mesh_Free(Mesh *mesh)
 {
-    printf("Freeing VAO: %u, VBO: %u, EBO: %u\n", mesh->VAO, mesh->VBO, mesh->EBO);
+    if (mesh->refCount > 0)
+    {
+        Log(&_logConfig, "Could not free Mesh: refCount %d != 0\n", mesh->refCount);
+        return;
+    }
+    Log(&_logConfig, "Freeing VAO: %u, VBO: %u, EBO: %u\n", mesh->VAO, mesh->VBO, mesh->EBO);
     glDeleteVertexArrays(1, &mesh->VAO);
     glDeleteBuffers(1, &mesh->VBO);
     glDeleteBuffers(1, &mesh->EBO);
-    if (mesh->vertices)
-        free(mesh->vertices);
-    if (mesh->indices)
-        free(mesh->indices);
+    free(mesh->vertices);
+    free(mesh->indices);
     free(mesh);
-}
-
-Mesh *Mesh_CreatePlane(V2 meshScale, V2_INT vertexCount, uint32_t color)
-{
-    int width = vertexCount.x;
-    int height = vertexCount.y;
-    // Vertices
-    uint32_t vertices_size = width * height;
-    Vertex *vertices = malloc(sizeof(Vertex) * vertices_size);
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            vertices[y * width + x].position = (V3){
-                x * meshScale.x,
-                0.0f,
-                y * meshScale.y};
-            vertices[y * width + x].normal = (V3){0.0, 1.0, 0.0};
-            vertices[y * width + x].uv = (UV){
-                (float)x / (float)(width - 1),
-                (float)y / (float)(height - 1)};
-            vertices[y * width + x].color = color;
-        }
-    }
-    // Indices
-    uint32_t indices_size = (width - 1) * (height - 1) * 6;
-    uint32_t *indices = malloc(sizeof(uint32_t) * indices_size);
-    int index = 0;
-    for (int y = 0; y < height - 1; y++)
-    {
-        for (int x = 0; x < width - 1; x++)
-        {
-            // First triangle
-            indices[index++] = y * width + x;
-            indices[index++] = (y + 1) * width + x;
-            indices[index++] = (y + 1) * width + (x + 1);
-            // Second triangle
-            indices[index++] = y * width + x;
-            indices[index++] = (y + 1) * width + (x + 1);
-            indices[index++] = y * width + (x + 1);
-        }
-    }
-    return Mesh_Create(vertices_size, vertices, indices_size, indices, V3_ZERO);
 }
 
 Mesh *Mesh_Create(size_t vertexCount, Vertex *vertices, size_t indexCount, uint32_t *indices, V3 pivot)
@@ -133,30 +86,145 @@ Mesh *Mesh_Create(size_t vertexCount, Vertex *vertices, size_t indexCount, uint3
     return mesh;
 }
 
-Mesh *Mesh_CreateCube(float size)
+// -------------------------
+// Meshes
+// -------------------------
+
+Mesh *Mesh_CreatePlane(V2 meshScale, V2_INT vertexCount, uint32_t color, V2 pivot)
 {
-    Vertex *vertices = malloc(sizeof(Vertex) * 8);
-    uint32_t colors[8] = {
-        0xFFFF0000, // Red
-        0xFF00FF00, // Green
-        0xFF0000FF, // Blue
-        0xFFFFFF00, // Yellow
-        0xFFFF00FF, // Magenta
-        0xFF00FFFF, // Cyan
-        0xFFFFFFFF, // White
-        0xFF808080  // Gray
+    float dx = meshScale.x / (float)vertexCount.x;
+    float dy = meshScale.y / (float)vertexCount.y;
+    float xOffset = -pivot.x * meshScale.x;
+    float yOffset = -pivot.y * meshScale.y;
+    int width = vertexCount.x;
+    int height = vertexCount.y;
+    // Vertices
+    uint32_t vertices_size = width * height;
+    Vertex *vertices = malloc(sizeof(Vertex) * vertices_size);
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            vertices[y * width + x].position = (V3){
+                x * dx + xOffset,
+                0.0f,
+                y * dy + yOffset};
+            vertices[y * width + x].normal = (V3){0.0, 1.0, 0.0};
+            vertices[y * width + x].uv = (UV){
+                (float)x / (float)(width - 1),
+                (float)y / (float)(height - 1)};
+            vertices[y * width + x].color = color;
+        }
+    }
+    // Indices
+    uint32_t indices_size = (width - 1) * (height - 1) * 6;
+    uint32_t *indices = malloc(sizeof(uint32_t) * indices_size);
+    int index = 0;
+    for (int y = 0; y < height - 1; y++)
+    {
+        for (int x = 0; x < width - 1; x++)
+        {
+            // First triangle
+            indices[index++] = y * width + x;
+            indices[index++] = (y + 1) * width + x;
+            indices[index++] = (y + 1) * width + (x + 1);
+            // Second triangle
+            indices[index++] = y * width + x;
+            indices[index++] = (y + 1) * width + (x + 1);
+            indices[index++] = y * width + (x + 1);
+        }
+    }
+    return Mesh_Create(vertices_size, vertices, indices_size, indices, (V3){pivot.x * meshScale.x, 0.0f, pivot.y * meshScale.y});
+}
+
+Mesh *Mesh_CreateCube(V3 meshSize, V3 pivot, uint32_t color)
+{
+    float dx = meshSize.x * 0.5f;
+    float dy = meshSize.y * 0.5f;
+    float dz = meshSize.z * 0.5f;
+
+    // Offset the cube by the pivot
+    float xOffset = -pivot.x * meshSize.x;
+    float yOffset = -pivot.y * meshSize.y;
+    float zOffset = -pivot.z * meshSize.z;
+
+    Vertex vertices[24];
+    uint32_t indices[36];
+
+    // Define cube faces
+    V3 normals[6] = {
+        {0, 0, 1},  // Front
+        {0, 0, -1}, // Back
+        {1, 0, 0},  // Right
+        {-1, 0, 0}, // Left
+        {0, 1, 0},  // Top
+        {0, -1, 0}  // Bottom
     };
-    for (int i = 0; i < 8; i++)
+
+    // UVs (same for all faces)
+    UV faceUVs[4] = {
+        {0.0f, 0.0f},
+        {1.0f, 0.0f},
+        {1.0f, 1.0f},
+        {0.0f, 1.0f}};
+
+    // Positions for each face (before scaling)
+    V3 faceVerts[6][4] = {
+        // Front (+Z)
+        {{-dx, -dy, +dz}, {+dx, -dy, +dz}, {+dx, +dy, +dz}, {-dx, +dy, +dz}},
+        // Back (-Z)
+        {{+dx, -dy, -dz}, {-dx, -dy, -dz}, {-dx, +dy, -dz}, {+dx, +dy, -dz}},
+        // Right (+X)
+        {{+dx, -dy, +dz}, {+dx, -dy, -dz}, {+dx, +dy, -dz}, {+dx, +dy, +dz}},
+        // Left (-X)
+        {{-dx, -dy, -dz}, {-dx, -dy, +dz}, {-dx, +dy, +dz}, {-dx, +dy, -dz}},
+        // Top (+Y)
+        {{-dx, +dy, +dz}, {+dx, +dy, +dz}, {+dx, +dy, -dz}, {-dx, +dy, -dz}},
+        // Bottom (-Y)
+        {{-dx, -dy, -dz}, {+dx, -dy, -dz}, {+dx, -dy, +dz}, {-dx, -dy, +dz}}};
+
+    int v = 0, i = 0;
+    for (int face = 0; face < 6; face++)
     {
-        vertices[i].position = V3_SCALE(_CUBE_VERTICES[i], size);
-        vertices[i].normal = V3_ZERO;    // Normals can be computed later if needed
-        vertices[i].uv = (UV){0.0, 0.0}; // UVs can be set later if needed
-        vertices[i].color = colors[i];   // Default color
+        for (int j = 0; j < 4; j++)
+        {
+            vertices[v].position = (V3){
+                faceVerts[face][j].x + xOffset,
+                faceVerts[face][j].y + yOffset,
+                faceVerts[face][j].z + zOffset};
+            vertices[v].normal = normals[face];
+            vertices[v].uv = faceUVs[j];
+            vertices[v].color = color;
+            v++;
+        }
+
+        // Two triangles per face
+        indices[i++] = face * 4 + 0;
+        indices[i++] = face * 4 + 1;
+        indices[i++] = face * 4 + 2;
+        indices[i++] = face * 4 + 2;
+        indices[i++] = face * 4 + 3;
+        indices[i++] = face * 4 + 0;
     }
-    uint32_t *indices = malloc(sizeof(uint32_t) * 36);
-    for (int i = 0; i < 36; i++)
+
+    return Mesh_Create(24, vertices, 36, indices, pivot);
+}
+
+// -------------------------
+// Tracking
+// -------------------------
+
+void Mesh_MarkReferenced(Mesh *mesh)
+{
+    mesh->refCount++;
+}
+
+void Mesh_MarkUnreferenced(Mesh *mesh)
+{
+    mesh->refCount--;
+    if (mesh->refCount < 0)
     {
-        indices[i] = _CUBE_INDICES[i];
+        LogWarning(&_logConfig, "Mesh_MarkUnreferenced: mesh refCount < 0");
+        mesh->refCount = 0;
     }
-    return Mesh_Create(8, vertices, 36, indices, V3_HALF);
 }

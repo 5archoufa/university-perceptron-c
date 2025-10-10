@@ -37,23 +37,24 @@ World *World_Create(char *name)
 
 void World_Free(World *world, bool resizeWorlds)
 {
+    world->isMarkedForFreeing = true;
     LogFree(&_logConfig, "World<%s>, Resize List of Worlds<%d>", world->name, resizeWorlds);
     // Update world count
-    for (int i = 0; i < _worldCount; i++)
+    if (resizeWorlds) // Resize Worlds container
     {
-        if (_worlds[i] == world)
+        for (int i = 0; i < _worldCount; i++)
         {
-            _worldCount--;
-            if (resizeWorlds) // Resize Worlds container
+            if (_worlds[i] == world)
             {
+                _worldCount--;
                 // Shift remaining worlds down
                 for (int j = i; j < _worldCount - 1; j++)
                 {
                     _worlds[j] = _worlds[j + 1];
                 }
                 _worlds = realloc(_worlds, sizeof(World *) * _worldCount);
+                break;
             }
-            break;
         }
     }
     // Free Entities
@@ -115,6 +116,10 @@ void World_Light_Remove(EC_Light *ec_light)
         LogFree(&_logConfig, "Failed to remove light from world, entity '%s' has no world", ec_light->component->entity->name);
         return;
     }
+    if (world->isMarkedForFreeing)
+    {
+        return;
+    }
     switch (ec_light->type)
     {
     case LS_T_DIRECTIONAL:
@@ -170,6 +175,10 @@ void World_Renderer3D_Add(EC_Renderer3D *ec_renderer3D)
 void World_Renderer3D_Remove(EC_Renderer3D *ec_renderer3D)
 {
     World *world = World_Get(ec_renderer3D->component->entity);
+    if (world->isMarkedForFreeing)
+    {
+        return;
+    }
     for (int i = 0; i < world->rendererCount_3D; i++)
     {
         if (world->renderers_3D[i] == ec_renderer3D)

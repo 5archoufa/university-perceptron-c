@@ -10,17 +10,19 @@ out vec4 FragColor;
 uniform sampler2D textureSampler;
 uniform bool useTexture = false;
 
-// Toon shader parameters for terrain
-uniform int toonLevels = 4;  // More levels for better terrain definition
-uniform float ambientStrength = 0.2;  // Lower ambient to make shadows more prominent
+// Toon shader parameters
+uniform int toonLevels = 3;
+uniform float ambientStrength = 0.5;
 uniform vec3 ambientColor = vec3(1.0, 1.0, 1.0);
+uniform float rimThreshold = 0.7;
+uniform float rimStrength = 0.25;
 uniform float detailScale = 10.0;
 uniform float detailStrength = 0.1;
 uniform float noiseScale = 50.0;
 
-// Shadow parameters - more aggressive for terrain
-uniform float shadowSoftness = 0.05;  // Much sharper shadow edges to show curves
-uniform vec3 shadowColor = vec3(0.2, 0.2, 0.25);  // Darker shadows for better contrast
+// Shadow parameters
+uniform float shadowSoftness = 0.3;  // How soft shadow edges are
+uniform vec3 shadowColor = vec3(0.3, 0.3, 0.4);  // Tint for shadows (slightly blue)
 
 // === Global UBO ===
 layout(std140, binding = 0) uniform ShaderGlobalData {
@@ -81,10 +83,6 @@ vec3 calcDirectionalLight(vec3 direction, vec3 color, float intensity, vec3 norm
     // Don't invert - use direction as-is (opposite of sea shader)
     vec3 lightDir = normalize(direction);
     float NdotL = max(dot(normal, lightDir), 0.0);
-    
-    // Boost the contrast before toon shading to make curves more visible
-    NdotL = pow(NdotL, 0.7);  // Gamma-like adjustment makes subtle curves more pronounced
-    
     float toonDiffuse = toonShade(NdotL);
     return toonDiffuse * color * intensity;
 }
@@ -165,14 +163,31 @@ void main() {
     float noise = pixelNoise(fragPos.xz * noiseScale);
     float combinedDetail = (mix(detail, noise, 0.5) - 0.5) * detailStrength;
 
-    // Apply strong shadow color tint to make terrain curves visible
+    // Apply shadow color tint to shadowed areas
     vec3 finalLighting = lighting;
     if (light_directional_count > 0) {
-        // Apply aggressive shadow mixing for terrain definition
-        finalLighting = mix(ambientStrength * shadowColor, lighting, shadowFactor);
+        // Only apply shadow tint if actually in shadow (shadowFactor < 1.0)
+        if (shadowFactor < 0.99) {
+            // Mix between shadow ambient and full lighting
+            finalLighting = mix(ambientStrength * shadowColor, lighting, shadowFactor);
+        }
+    }
+
+    // Rim lighting
+    float rimIntensity = 0.0;
+    if (light_directional_count > 0) {
+        // Don't invert - use direction as-is
+        vec3 mainLightDir = normalize(light_directional_directions[0].xyz);
+        float NdotL = max(dot(norm, mainLightDir), 0.0);
+        float rimDot = 1.0 - max(dot(viewDir, norm), 0.0);
+        rimIntensity = smoothstep(rimThreshold - 0.05, rimThreshold + 0.05, rimDot);
+        rimIntensity *= step(0.2, NdotL);
     }
 
     vec3 result = baseColor.rgb * (finalLighting + vec3(combinedDetail));
+    if (light_directional_count > 0) {
+        result += rimIntensity * rimStrength * light_directional_colors[0].xyz * light_directional_colors[0].w * shadowFactor;
+    }
     
     // Debug: Uncomment to visualize normals
     // FragColor = vec4(norm * 0.5 + 0.5, 1.0); return;

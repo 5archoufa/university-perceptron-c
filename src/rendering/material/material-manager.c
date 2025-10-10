@@ -50,6 +50,7 @@ void MaterialManager_Cleanup()
 {
     for (int i = 0; i < _manager->materials_size; i++)
     {
+        if(_manager->materials[i] == NULL) continue;
         if (_manager->materials[i]->refCount <= 0)
         {
             Material_Free(_manager->materials[i]);

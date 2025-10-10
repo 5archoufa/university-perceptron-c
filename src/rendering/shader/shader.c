@@ -100,14 +100,16 @@ Shader* Shader_Create(const char *name, const char *vertexSource, const char *fr
     {
         LogError(&_logConfig, "Error Creating Shader %s", name);
     }
-
     Shader *shader = malloc(sizeof(Shader));
     shader->shaderProgram = shaderProgram;
+    // Name
     shader->name = malloc(sizeof(char) * 64);
     strcpy(shader->name, name);
+    // Properties
     shader->properties_size = properties_size;
     shader->properties = malloc(sizeof(ShaderProperty) * properties_size);
-
+    // Model Location
+    shader->modelLoc = glGetUniformLocation(shaderProgram, "model");
     // Add to shader list
     ShaderManager_AddShader(shader);
     return shader;

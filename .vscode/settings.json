@@ -19,7 +19,7 @@
         "cstdlib": "c",
         "v3.h": "c",
         "circle.h": "c",
-        "shape.C": "cpp",
+        "shape.C": "c",
         "pixel.h": "c",
         "v2.h": "c",
         "input_manager.h": "c",
@@ -28,7 +28,7 @@
         "stack.h": "c",
         "*.cs": "c",
         "camera.h": "c",
-        "camera_input_handler.C": "cpp",
+        "camera_input_handler.C": "c",
         "state_machine.h": "c",
         "chrono": "c",
         "text_encoding": "c",
@@ -69,7 +69,7 @@
         "ec_nn_layer.h": "c",
         "ec_nn_neuron.h": "c",
         "noise.h": "c",
-        "rd_noise.C": "cpp",
+        "rd_noise.C": "c",
         "rd_noise.h": "c",
         "functional": "c",
         "rd_island.h": "c",
@@ -104,7 +104,7 @@
         "texture-manager.h": "c",
         "shader-manager.h": "c",
         "math.h": "c",
-        "ls_point.h": "c"
+        "ls_point.h": "c",
+        "ec_human.h": "c"
     },
-    "makefile.configureOnOpen": false
 }

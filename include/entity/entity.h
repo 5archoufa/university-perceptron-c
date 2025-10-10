@@ -37,7 +37,12 @@ typedef enum
     /* Lighting */
     EC_T_LIGHT,
     /* Sky */
-    EC_T_PLANET
+    EC_T_PLANET,
+    /* Creatures */
+    EC_T_CREATURE,
+    EC_T_HUMAN,
+    /* Player */
+    EC_T_PLAYER,
 } EC_Type;
 
 struct Component

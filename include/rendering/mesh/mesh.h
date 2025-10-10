@@ -8,6 +8,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+// ------------------------- 
+// Types 
+// -------------------------
+
 typedef struct UV UV;
 typedef struct Vertex Vertex;
 
@@ -42,8 +46,25 @@ typedef struct
     int refCount;
 } Mesh;
 
+// ------------------------- 
+// Creation & Freeing 
+// -------------------------
+
 Mesh *Mesh_Create(size_t vertexCount, Vertex *vertices, size_t indexCount, uint32_t *indices, V3 pivot);
 void Mesh_Free(Mesh *mesh);
-Mesh* Mesh_CreateCube(float size);
+
+// ------------------------- 
+// Meshes 
+// -------------------------
+
+Mesh *Mesh_CreateCube(V3 meshSize, V3 pivot, uint32_t color);
+Mesh *Mesh_CreatePlane(V2 meshScale, V2_INT vertexCount, uint32_t color, V2 pivot);
+
+// ------------------------- 
+// Tracking 
+// -------------------------
+
+void Mesh_MarkReferenced(Mesh *mesh);
+void Mesh_MarkUnreferenced(Mesh *mesh);
 
 #endif

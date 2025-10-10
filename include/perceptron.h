@@ -10,6 +10,7 @@
 #include <cglm/cglm.h> 
 
 extern float DeltaTime;
+extern float FixedDeltaTime;
 extern MyWindowConfig WindowConfig;
 extern const V3 WORLD_UP;
 extern const vec3 WORLD_UP_vec3;

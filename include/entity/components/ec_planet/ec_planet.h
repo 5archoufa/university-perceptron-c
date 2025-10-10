@@ -16,6 +16,6 @@ struct EC_Planet
     V3 rotationSpeed;
 };
 
-EC_Planet *Prefab_Planet(Entity *parent, V3 rotationSpeed, uint32_t color, float intensity);
+EC_Planet *Prefab_Planet(Entity *parent, V3 rotationSpeed, uint32_t color, float intensity, float timeOfDay);
 
 #endif

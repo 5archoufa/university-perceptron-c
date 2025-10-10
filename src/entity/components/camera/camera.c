@@ -3,8 +3,6 @@
 // C Libraries
 #include <stdlib.h>
 #include <stdint.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 #include <math.h>
 #include <string.h>
 // Entities & Components
@@ -38,17 +36,6 @@ static LogConfig _logConfig = {"EC_Camera", LOG_LEVEL_WARN, LOG_COLOR_BLUE};
 const vec3 VEC_UP = {0.0f, 1.0f, 0.0f};
 const vec3 VEC_RIGHT = {1.0f, 0.0f, 0.0f};
 const vec3 VEC_FORWARD = {0.0f, 0.0f, -1.0f};
-
-// -------------------------
-// Utilities
-// -------------------------
-
-// Forward declarations
-static void BlitToScreen(GLuint textureID, GLuint shaderProgram, GLuint quadVAO);
-
-static void RenderRulers(EC_Camera *ec_camera)
-{
-}
 
 // -------------------------
 // Utilities
@@ -131,11 +118,63 @@ static inline ShaderPropBigValue *GetBigValue(Shader *shader, Material *material
     return bigValue;
 }
 
+static void BlitToScreen(EC_Camera *ec_camera)
+{
+    // Disable depth test for 2D blitting
+    glDisable(GL_DEPTH_TEST);
+
+    // Calculate aspect ratios to maintain proper scaling
+    float renderTargetAspect = (float)ec_camera->renderTarget->width / (float)ec_camera->renderTarget->height;
+    float windowAspect = (float)WindowConfig.windowWidth / (float)WindowConfig.windowHeight;
+
+    int viewportX = 0;
+    int viewportY = 0;
+    int viewportWidth = WindowConfig.windowWidth;
+    int viewportHeight = WindowConfig.windowHeight;
+
+    // Preserve aspect ratio with letterboxing (black bars)
+    if (windowAspect > renderTargetAspect)
+    {
+        // Window is wider than render target - add pillarboxing (vertical black bars on sides)
+        viewportWidth = (int)(WindowConfig.windowHeight * renderTargetAspect);
+        viewportX = (WindowConfig.windowWidth - viewportWidth) / 2;
+    }
+    else if (windowAspect < renderTargetAspect)
+    {
+        // Window is taller than render target - add letterboxing (horizontal black bars on top/bottom)
+        viewportHeight = (int)(WindowConfig.windowWidth / renderTargetAspect);
+        viewportY = (WindowConfig.windowHeight - viewportHeight) / 2;
+    }
+
+    // Set viewport for pixel art scaling with aspect ratio preservation
+    glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
+
+    // Use blit shader and cache it
+    glUseProgram(ec_camera->blitShaderProgram);
+    ec_camera->boundShaderProgram = ec_camera->blitShaderProgram;
+
+    // Bind quad VAO and render target texture
+    glBindVertexArray(ec_camera->quadVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, ec_camera->renderTarget->colorTexture);
+    
+    // Use cached uniform location
+    glUniform1i(ec_camera->blitScreenTextureLoc, 0);
+    
+    // Draw fullscreen quad
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // Clean up state
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glEnable(GL_DEPTH_TEST);
+}
+
 // -------------------------
 // Rendering
 // -------------------------
 
-static void Camera_Render_OpenGL(EC_Camera *ec_camera, EC_Renderer3D *ec_renderer3d, GLuint modelLoc)
+static void Camera_Render_OpenGL(EC_Camera *ec_camera, EC_Renderer3D *ec_renderer3d)
 {
     Material *material = ec_renderer3d->material;
     Shader *shader = material->shader;
@@ -149,7 +188,7 @@ static void Camera_Render_OpenGL(EC_Camera *ec_camera, EC_Renderer3D *ec_rendere
         ec_camera->boundShaderProgram = shader->shaderProgram;
     }
 
-    // ==== Upload Sharder Properties ==== //
+    // ==== Upload Shader Properties ==== //
     int j = 0; // Index of the latest instance property inside material->instanceProps
     ShaderProperty *prop;
     ShaderPropBigValue *bigValue;
@@ -230,21 +269,13 @@ static void Camera_Render_OpenGL(EC_Camera *ec_camera, EC_Renderer3D *ec_rendere
         }
     }
 
-    // ==== Upload Model ==== //
-    mat4 model;
-    T_WMatrix(&entity->transform, model);
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
+    // ============ Upload Model Matrix to UBO ============ // 
+    T_WMatrix(&entity->transform, shader->model);
+    glUniformMatrix4fv(shader->modelLoc, 1, GL_FALSE, (float *)shader->model);
 
-    // Bind Texture
-    // bool useTexture = (ec_renderer3d->texture != NULL && ec_renderer3d->texture->textureID != 0);
-    // if (useTexture)
-    // {
-    //     glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
-    //     glBindTexture(GL_TEXTURE_2D, ec_renderer3d->texture->textureID);
-    //     glUniform1i(ec_camera->textureLoc, 0);
-    // }
-    // glUniform1i(ec_camera->useTextureLoc, useTexture ? 1 : 0);
-
+    // -------------------------
+    // Draw
+    // -------------------------
     // -------------------------
     // Draw
     // -------------------------
@@ -257,20 +288,29 @@ static void Camera_LateUpdate(Component *component)
 {
     Log(&_logConfig, "Camera LateUpdate(Deltatime: %.4f)", DeltaTime);
     EC_Camera *ec_camera = component->self;
+    
     glBindFramebuffer(GL_FRAMEBUFFER, ec_camera->renderTarget->FBO);
+    
     glViewport(0, 0, ec_camera->renderTarget->width, ec_camera->renderTarget->height);
-    // Clear with a distinct color to show render target boundaries
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Dark blue-gray background
+    // Clear with a nice sky color
+    glClearColor(0.53f, 0.81f, 0.92f, 1.0f); // Light blue sky
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // Enable depth testing for 3D rendering
+    
+    // Enable depth testing for proper 3D rendering
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
-    // ==== Prepare Global Data ==== //
+    // ============ Prepare Global Data ============ // 
     ShaderGlobalData *globalData = ShaderManager_GetGlobalData();
-    // ==== Upload Global Data :: Camera ==== //
+
+    // ============ Upload Global Data :: World ============ // 
+    globalData->time = PerceptronTime;
+
+    // ============ Prepare Global Data :: Camera ============ // 
     // Camera Position
     V3 cameraPos_V3 = EC_WPos(ec_camera->component);
     vec3 cameraPos_vec3 = {cameraPos_V3.x, cameraPos_V3.y, cameraPos_V3.z};
+    memcpy(globalData->camera_position, cameraPos_vec3, sizeof(vec3));
     // Camera View
     V3 f = T_Forward(&ec_camera->component->entity->transform);
     V3 r = V3_NORM(V3_CROSS(WORLD_UP, f));
@@ -278,9 +318,8 @@ static void Camera_LateUpdate(Component *component)
     // Build look-at manually
     vec3 center = {cameraPos_vec3[0] + f.x, cameraPos_vec3[1] + f.y, cameraPos_vec3[2] + f.z};
     vec3 up = {u.x, u.y, u.z};
+    // Build view and projection matrices (cglm produces column-major, which is correct for OpenGL)
     glm_lookat(cameraPos_vec3, center, up, globalData->view);
-    // Projection matrix
-    // TODO: Add a flag to the camera to check whether or not projection needs to be recalculated
     glm_perspective(ec_camera->FOV,
                     ec_camera->viewport.x / ec_camera->viewport.y,
                     ec_camera->nearClip,
@@ -288,7 +327,7 @@ static void Camera_LateUpdate(Component *component)
                     ec_camera->proj);
     memcpy(globalData->projection, ec_camera->proj, sizeof(mat4));
 
-    // ==== Upload Global Data :: Directional Lights ==== //
+    // ============ Upload Global Data :: Directional Lights ============ // 
     int lights_count = ec_camera->world->lights_directional_size;
     EC_Light **lights = ec_camera->world->lights_directional;
     int uploadCount = 0;
@@ -303,24 +342,25 @@ static void Camera_LateUpdate(Component *component)
             continue;
         EC_Light *ec_light = lights[i];
         LS_Directional *ls_directional = (LS_Directional *)ec_light->lightSource;
-        // Intensities
-        globalData->light_directional_intensities[uploadCount] = ls_directional->intensity;
-        // Colors
+        // Color
         globalData->light_directional_colors[uploadCount][0] = ls_directional->color_openGL[0];
         globalData->light_directional_colors[uploadCount][1] = ls_directional->color_openGL[1];
         globalData->light_directional_colors[uploadCount][2] = ls_directional->color_openGL[2];
-        // Directions
+        // Intensity
+        globalData->light_directional_colors[uploadCount][3] = ls_directional->intensity;
+        // Direction - Send raw forward direction
         V3 lightDir = EC_Forward(ec_light->component);
-        lightDir = V3_SCALE(lightDir, -1.0f);
         globalData->light_directional_directions[uploadCount][0] = lightDir.x;
         globalData->light_directional_directions[uploadCount][1] = lightDir.y;
         globalData->light_directional_directions[uploadCount][2] = lightDir.z;
+        
         // Update upload count
         uploadCount++;
     }
     // Update Global Data :: Directional Light count
-    globalData->light_directional_count = uploadCount - 1;
-    // ==== Point Lights ==== //
+    globalData->light_directional_count = uploadCount;
+
+    // ============ Update Global Data :: Point Lights ============ // 
     lights_count = ec_camera->world->lights_point_size;
     lights = ec_camera->world->lights_point;
     uploadCount = 0;
@@ -335,25 +375,26 @@ static void Camera_LateUpdate(Component *component)
             continue;
         EC_Light *ec_light = lights[i];
         LS_Point *ls_point = (LS_Point *)ec_light->lightSource;
-        // Intensities
-        globalData->light_point_intensities[uploadCount] = ls_point->intensity;
-        // Colors
+        // Color
         globalData->light_point_colors[uploadCount][0] = ls_point->color_openGL[0];
         globalData->light_point_colors[uploadCount][1] = ls_point->color_openGL[1];
         globalData->light_point_colors[uploadCount][2] = ls_point->color_openGL[2];
-        // Positions
+        // Intensity
+        globalData->light_point_colors[uploadCount][3] = ls_point->intensity;
+        // Position
         V3 position = EC_WPos(ec_light->component);
         globalData->light_point_positions[uploadCount][0] = position.x;
         globalData->light_point_positions[uploadCount][1] = position.y;
         globalData->light_point_positions[uploadCount][2] = position.z;
-        // Ranges
-        globalData->light_point_ranges[uploadCount] = ls_point->range;
+        // Range
+        globalData->light_point_positions[uploadCount][3] = ls_point->range;
         // Update upload count
         uploadCount++;
     }
     // Update Global Data :: Point Light count
-    globalData->light_point_count = uploadCount - 1;
-    // Upload Global Data
+    globalData->light_point_count = uploadCount;
+
+    // ============ Upload Global Data ============ // 
     ShaderManager_UploadGlobalData();
 
     // -------------------------
@@ -361,15 +402,23 @@ static void Camera_LateUpdate(Component *component)
     // -------------------------
     int rendererCount_3D = ec_camera->world->rendererCount_3D;
     EC_Renderer3D **renderers = ec_camera->world->renderers_3D;
-    GLuint modelLoc = ShaderManager_GetModelLoc();
+    
     for (int i = 0; i < rendererCount_3D; i++)
     {
-        Camera_Render_OpenGL(ec_camera, renderers[i], modelLoc);
+        Camera_Render_OpenGL(ec_camera, renderers[i]);
     }
-    // Blit to screen
+    
+    // Unbind VAO and textures from 3D rendering to ensure clean state
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    // Unbind the render target framebuffer before blitting
+    // This ensures we're done writing to the render target's textures
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // Blit to screen
     // BlitToScreen will handle viewport scaling and aspect ratio preservation
-    BlitToScreen(ec_camera->renderTarget->colorTexture, ec_camera->blitShaderProgram, ec_camera->quadVAO);
+    BlitToScreen(ec_camera);
 }
 
 V2_INT Camera_WorldToScreen_V2(EC_Camera *EC_camera, V2 *position)
@@ -440,49 +489,6 @@ void RenderTarget_Free(RenderTarget *rt)
 
 const char *SCREEN_TEXTURE = "screenTexture";
 
-void BlitToScreen(GLuint textureID, GLuint shaderProgram, GLuint quadVAO)
-{
-    // Bind default framebuffer (screen)
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDisable(GL_DEPTH_TEST);
-
-    // Calculate aspect ratios to maintain proper scaling
-    float renderTargetAspect = (float)WindowConfig.imageWidth / (float)WindowConfig.imageHeight;
-    float windowAspect = (float)WindowConfig.windowWidth / (float)WindowConfig.windowHeight;
-
-    int viewportX = 0;
-    int viewportY = 0;
-    int viewportWidth = WindowConfig.windowWidth;
-    int viewportHeight = WindowConfig.windowHeight;
-
-    // Preserve aspect ratio with letterboxing (black bars)
-    if (windowAspect > renderTargetAspect)
-    {
-        // Window is wider than render target - add pillarboxing (vertical black bars on sides)
-        viewportWidth = (int)(WindowConfig.windowHeight * renderTargetAspect);
-        viewportX = (WindowConfig.windowWidth - viewportWidth) / 2;
-    }
-    else if (windowAspect < renderTargetAspect)
-    {
-        // Window is taller than render target - add letterboxing (horizontal black bars on top/bottom)
-        viewportHeight = (int)(WindowConfig.windowWidth / renderTargetAspect);
-        viewportY = (WindowConfig.windowHeight - viewportHeight) / 2;
-    }
-
-    // Set viewport for pixel art scaling with aspect ratio preservation
-    glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
-
-    glUseProgram(shaderProgram);
-    glBindVertexArray(quadVAO);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glUniform1i(glGetUniformLocation(shaderProgram, SCREEN_TEXTURE), 0);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-    glBindVertexArray(0);
-    glEnable(GL_DEPTH_TEST);
-}
-
 void SetupBlitQuad(EC_Camera *ec_camera)
 {
     float quadVertices[] = {
@@ -530,8 +536,10 @@ EC_Camera *EC_Camera_Create(Entity *entity, V2 viewport, float fov,
     SetupBlitQuad(ec_camera);
 
     // Load and compile blit shader
-    
     ec_camera->blitShaderProgram = ShaderManager_Get(SHADER_SCREEN_BLIT)->shaderProgram;
+    
+    // Cache uniform locations
+    ec_camera->blitScreenTextureLoc = glGetUniformLocation(ec_camera->blitShaderProgram, "screenTexture");
 
     ec_camera->component = Component_Create(ec_camera, entity, EC_T_CAMERA,
                                             EC_Camera_Free, NULL, NULL, NULL,

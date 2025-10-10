@@ -42,6 +42,22 @@ inline V2 V2_Direction(float x, float y){
     return (V2){x / length, y / length};
 }
 
+V2 V2_NORM(V2 a)
+{
+    float length = sqrtf(a.x * a.x + a.y * a.y);
+    if (length == 0)
+    {
+        a.x = 0;
+        a.y = 0;
+    }
+    else
+    {
+        a.x /= length;
+        a.y /= length;
+    }
+    return a;
+}
+
 V2 V2_CENTER(V2 *a, V2 *b)
 {
     return (V2){(a->x + b->x) * 0.5, (a->y + b->y) * 0.5};

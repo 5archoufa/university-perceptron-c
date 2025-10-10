@@ -8,6 +8,7 @@
 #include "entity/transform.h"
 
 static Material *_defaultMaterial = NULL;
+static LogConfig _logConfig = {"EC_Renderer3D", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
 
 // -------------------------
 // Entity Events
@@ -30,26 +31,33 @@ void EC_Renderer3D_Update(Component *component)
 
 static void EC_Renderer3D_Free(Component *component)
 {
-    EC_Renderer3D *ec_renderer = component->self;
-    if (ec_renderer->mesh == NULL)
+    EC_Renderer3D *ec_renderer3d = component->self;
+    if (ec_renderer3d->mesh == NULL)
     {
         printf("Warning: EC_Renderer3D_Free: mesh is NULL\n");
     }
-    World_Renderer3D_Remove(ec_renderer);
-    Mesh_Free(ec_renderer->mesh);
-    free(ec_renderer);
+    // Mark unreferenced
+    Material_MarkUnreferenced(ec_renderer3d->material);
+    Mesh_MarkUnreferenced(ec_renderer3d->mesh);
+    World_Renderer3D_Remove(ec_renderer3d);
+    free(ec_renderer3d);
 }
 
-/// @brief 
-/// @param entity 
-/// @param mesh 
+/// @brief
+/// @param entity
+/// @param mesh
 /// @param material If NULL, default material will be used.
-/// @return 
+/// @return
 EC_Renderer3D *EC_Renderer3D_Create(Entity *entity, Mesh *mesh, Material *material)
 {
     EC_Renderer3D *ec_renderer3d = malloc(sizeof(EC_Renderer3D));
+    // Mesh
     ec_renderer3d->mesh = mesh;
+    Mesh_MarkReferenced(mesh);
+    // Material
     ec_renderer3d->material = material == NULL ? _defaultMaterial : material;
+    Material_MarkReferenced(ec_renderer3d->material);
+    // Update bounds
     EC_Renderer3D_CalculateBounds(ec_renderer3d);
     // Component
     ec_renderer3d->component = Component_Create(ec_renderer3d, entity, EC_T_RENDERER3D, EC_Renderer3D_Free, NULL, NULL, EC_Renderer3D_Update, NULL, NULL);
@@ -64,6 +72,8 @@ EC_Renderer3D *EC_Renderer3D_Create(Entity *entity, Mesh *mesh, Material *materi
 void EC_Renderer3D_SetDefaultMaterial(Material *material)
 {
     _defaultMaterial = material;
+    Material_MarkReferenced(material);
+    Log(&_logConfig, "Default Material set to %s", material->shader->name);
 }
 
 void EC_Renderer3D_CalculateBounds(EC_Renderer3D *ec_renderer3d)
@@ -98,6 +108,6 @@ void EC_Renderer3D_CalculateBounds(EC_Renderer3D *ec_renderer3d)
 EC_Renderer3D *Prefab_Cube(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, float meshSize, Texture *texture)
 {
     Entity *entity = Entity_Create(parent, "Cube", TS, position, rotation, scale);
-    Mesh *cubeMesh = Mesh_CreateCube(meshSize);
+    Mesh *cubeMesh = Mesh_CreateCube((V3){meshSize, meshSize, meshSize}, V3_HALF, 0xffffffff);
     return EC_Renderer3D_Create(entity, cubeMesh, NULL);
 }
