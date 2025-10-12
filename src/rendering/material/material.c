@@ -29,12 +29,17 @@ Material *Material_Create(Shader *shader, size_t instanceProps_size, ShaderPrope
     size_t arraySize = sizeof(ShaderPropertyInstance) * instanceProps_size;
     material->instanceProps = malloc(arraySize);
     memcpy(material->instanceProps, instanceProps, arraySize);
-    MaterialManager_AddMaterial(material);
+    MaterialManager_RegisterMaterial(material);
     return material;
 }
 
 void Material_Free(Material *material)
 {
+    if(material->refCount > 0) {
+        LogError(&_logConfig, "Could not Free Material: RefCount > 0");
+        return;
+    }
+    LogFree(&_logConfig, "");
     free(material->instanceProps);
     free(material);
 }
@@ -53,7 +58,7 @@ void Material_MarkUnreferenced(Material *material)
     material->refCount--;
     if (material->refCount < 0)
     {
-        LogError(&_logConfig, "Material (For Shader<'%s'>) refCount dropped below zero. This is not supposed to happen, but the material will be freed on the next cleanup cycle regardless.", material->shader->name);
+        LogError(&_logConfig, "The Material's refCount dropped below zero. This is not supposed to happen, but the material will be freed on the next cleanup cycle regardless.");
         material->refCount = 0;
     }
 }

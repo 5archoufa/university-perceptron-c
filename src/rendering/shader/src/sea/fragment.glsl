@@ -18,7 +18,7 @@ uniform vec3 highlightColor = vec3(0.6, 0.8, 0.95);      // Light cyan highlight
 uniform float ambientStrength = 0.45;
 uniform float specularStrength = 1.2;  // Higher for more shimmer
 uniform float shininess = 64.0;        // Higher for tighter highlights
-uniform float flowSpeed = 0.3;         // How fast water flows
+uniform float flowSpeed = 1;         // How fast water flows
 uniform float flowScale = 5.0;         // Scale of flow patterns
 
 // === Global UBO ===

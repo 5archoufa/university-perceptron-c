@@ -105,6 +105,9 @@
         "shader-manager.h": "c",
         "math.h": "c",
         "ls_point.h": "c",
-        "ec_human.h": "c"
+        "ec_human.h": "c",
+        "ec_rigidbody.h": "c",
+        "ls_directional.h": "c"
     },
+    "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/gcc.exe",
 }

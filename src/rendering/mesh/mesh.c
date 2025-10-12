@@ -34,55 +34,57 @@ void Mesh_Free(Mesh *mesh)
     free(mesh);
 }
 
-Mesh *Mesh_Create(size_t vertexCount, Vertex *vertices, size_t indexCount, uint32_t *indices, V3 pivot)
+Mesh *Mesh_Create(size_t vertices_size, Vertex *vertices, size_t indices_size, uint32_t *indices, V3 pivot)
 {
     Mesh *mesh = malloc(sizeof(Mesh));
-    mesh->vertex_count = vertexCount;
-    mesh->vertices = vertices;
-    mesh->index_count = indexCount;
-    mesh->indices = indices;
+    // Vertices
+    mesh->vertices_size = vertices_size;
+    mesh->vertices = malloc(sizeof(Vertex) * vertices_size);
+    for (int i = 0; i < vertices_size; i++)
+    {
+        mesh->vertices[i] = vertices[i];
+    }
+    // Indices
+    mesh->indices_size = indices_size;
+    mesh->indices = malloc(indices_size * sizeof(uint32_t));
+    for (int i = 0; i < indices_size; i++)
+    {
+        mesh->indices[i] = indices[i];
+    }
+    // Pivot
     mesh->pivot = pivot;
+    // Referencing
     mesh->refCount = 0;
-
-    // Generate objects
+    // Generate OpenGL objects
     glGenVertexArrays(1, &mesh->VAO);
     glGenBuffers(1, &mesh->VBO);
     glGenBuffers(1, &mesh->EBO);
-
     // Bind VAO (all vertex attribute state will be stored in this VAO)
     glBindVertexArray(mesh->VAO);
-
     // Upload vertices (use vertex_count * sizeof(Vertex))
     glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-    glBufferData(GL_ARRAY_BUFFER, mesh->vertex_count * sizeof(Vertex), mesh->vertices, GL_STATIC_DRAW);
-
+    glBufferData(GL_ARRAY_BUFFER, mesh->vertices_size * sizeof(Vertex), mesh->vertices, GL_STATIC_DRAW);
     // Upload indices (use index_count * sizeof(uint32_t))
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->index_count * sizeof(uint32_t), mesh->indices, GL_STATIC_DRAW);
-
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices_size * sizeof(uint32_t), mesh->indices, GL_STATIC_DRAW);
     // Set vertex attributes
     // Position (location = 0) -> 3 floats
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, position));
-
     // Normal (location = 1) -> 3 floats
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, normal));
-
     // UV (location = 2) -> 2 floats
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, uv));
-
     // Color (location = 3) -> 4 unsigned bytes normalized to float0..1
     // If color is a packed uint32_t (RGBA), this interprets it as 4 bytes (A,B,G,R) depending on endianness.
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void *)offsetof(Vertex, color));
-    // If you want to treat color as integer: glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(Vertex), (void*)offsetof(Vertex, color));
-
-    // Unbind VAO (optional)
+    // Unbind VAO
     glBindVertexArray(0);
-
-    MeshManager_AddMesh(mesh);
+    // Register Mesh
+    MeshManager_RegisterMesh(mesh);
     return mesh;
 }
 
@@ -226,5 +228,18 @@ void Mesh_MarkUnreferenced(Mesh *mesh)
     {
         LogWarning(&_logConfig, "Mesh_MarkUnreferenced: mesh refCount < 0");
         mesh->refCount = 0;
+    }
+}
+
+// ------------------------- 
+// Utilities 
+// -------------------------
+
+inline void Vertex_MinMax(size_t vertices_size, Vertex* vertices, V3 *min, V3 *max){
+    *min = vertices[0].position;
+    *max = vertices[0].position;
+    for(int i = 1;i<vertices_size;i++){
+        *min = V3_MIN(*min, vertices[i].position);
+        *max = V3_MAX(*max, vertices[i].position);
     }
 }

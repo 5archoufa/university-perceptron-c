@@ -1,11 +1,23 @@
+#include "entity/entity.h"
+#include "perceptron.h"
+// C
 #include <stdlib.h>
 #include <stdbool.h>
-#include "entity/entity.h"
-#include "logging/logger.h"
-#include "world/world.h"
 #include <stdio.h>
+// Logging
+#include "logging/logger.h"
+// World
+#include "world/world.h"
+
+// -------------------------
+// Constants
+// -------------------------
 
 static LogConfig _logConfig = {"Entity", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
+static uint32_t _nextEntityId = 0;
+static size_t _e_layers_size = ELAYERS_SIZE;
+static ELayer _elayers[ELAYERS_SIZE] = ELAYERS;
+static ELayer *_e_layerDefault = NULL;
 
 // -------------------------
 // Entity Events
@@ -102,6 +114,23 @@ void Entity_FixedUpdate(Entity *entity)
 }
 
 // -------------------------
+// Layers
+// -------------------------
+
+void Entity_FreeCache()
+{
+}
+
+// -------------------------
+// Initialization
+// -------------------------
+
+void Entity_InitSystem()
+{
+    _e_layerDefault = &_elayers[0];
+}
+
+// -------------------------
 // Creation
 // -------------------------
 
@@ -133,7 +162,13 @@ Entity *Entity_Create(Entity *parent, char *name, TransformSpace TS, V3 position
 {
     LogCreate(&_logConfig, name);
     Entity *entity = malloc(sizeof(Entity));
+    // Id
+    entity->id = _nextEntityId++;
+    // Name
     entity->name = name;
+    entity->isStatic = false;
+    // Layer
+    entity->e_layer = _e_layerDefault;
     // Components
     entity->componentCount = 0;
     entity->component_keys = NULL;
@@ -148,6 +183,7 @@ Entity *Entity_Create_WorldParent(World *world, V3 position, Quaternion rotation
     LogCreate(&_logConfig, "World<%s>'s Parent Entity", world->name);
     Entity *entity = malloc(sizeof(Entity));
     entity->name = world->name;
+    entity->isStatic = false;
     // Components
     entity->componentCount = 0;
     entity->component_keys = NULL;

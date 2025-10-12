@@ -62,7 +62,6 @@ void Noise_Modifier_Mask_Circle(Noise *noise, int argCount, void **args)
         return;
     }
     float radius = *(float *)args[0];
-    printf("Applying Circle Mask with radius %.2f\n", radius);
     int centerX = noise->width / 2;
     int centerY = noise->height / 2;
     float maxDistance = fminf(centerX, centerY);
@@ -342,14 +341,6 @@ Mesh *Noise_CreateMesh(Noise *noise, V3 meshScale, int layers_size, const NoiseL
             V3 normal = V3_CROSS(tangentZ, tangentX);
             vertices[y * noise_width + x].normal = V3_NORM(normal);
             
-            // Debug: Print first normal to verify direction
-            if (x == noise_width/2 && y == noise_height/2) {
-                printf("Center normal: (%.3f, %.3f, %.3f)\n", 
-                    vertices[y * noise_width + x].normal.x,
-                    vertices[y * noise_width + x].normal.y,
-                    vertices[y * noise_width + x].normal.z);
-            }
-            
             // UVs
             vertices[y * noise_width + x].uv = (UV){
                 (float)x / (float)(noise_width - 1),
@@ -425,5 +416,7 @@ Mesh *Noise_CreateMesh(Noise *noise, V3 meshScale, int layers_size, const NoiseL
         }
     }
     Mesh *mesh = Mesh_Create(vertices_size, vertices, indices_size, indices, pivot);
+    free(vertices);
+    free(indices);
     return mesh;
 }

@@ -16,7 +16,7 @@ struct EC_Renderer3D{
     Component* component;
     Mesh* mesh;
     Material* material;
-    Bounds bounds;
+    AABB bounds;
 };
 
 // -------------------------
@@ -32,7 +32,7 @@ void EC_Renderer3D_SetDefaultMaterial(Material *material);
 // -------------------------
 // Prefabs
 // -------------------------
-EC_Renderer3D *Prefab_Cube(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, float meshSize, Texture *texture);
+EC_Renderer3D *Prefab_Cube(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, float meshSize, uint32_t color);
 
 // -------------------------
 // Bounds

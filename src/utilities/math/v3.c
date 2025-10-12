@@ -51,6 +51,29 @@ V3 V3_Forward(float z)
 {
     return (V3){0.0, 0.0, z};
 }
+inline V3 V3_MIN(V3 a, V3 b)
+{
+    return (V3){
+        .x = (a.x < b.x) ? a.x : b.x,
+        .y = (a.y < b.y) ? a.y : b.y,
+        .z = (a.z < b.z) ? a.z : b.z};
+}
+inline V3 V3_ABS(const V3 a)
+{
+    return (V3){
+        .x = (a.x < 0) ? -a.x : a.x,
+        .y = (a.y < 0) ? -a.y : a.y,
+        .z = (a.z < 0) ? -a.z : a.z};
+}
+
+inline V3 V3_MAX(V3 a, V3 b)
+{
+    return (V3){
+        .x = (a.x > b.x) ? a.x : b.x,
+        .y = (a.y > b.y) ? a.y : b.y,
+        .z = (a.z > b.z) ? a.z : b.z};
+}
+
 inline V3 V3_NORM(const V3 a)
 {
     V3 result = a;

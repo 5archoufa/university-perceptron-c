@@ -8,7 +8,7 @@ typedef struct EC_Camera EC_Camera;
 typedef struct Entity Entity;
 typedef struct World World;
 
-#include "entity/components/renderer/bounds.h"
+#include "physics/aabb.h"
 #include "entity/components/camera/camera.h"
 #include <stdlib.h>
 #include "world/world.h"
@@ -33,7 +33,7 @@ struct EC_Renderer
     /// @param boundedRectangle The rectangle within screen bounds
     void (*Render3D)(EC_Camera *camera, EC_Renderer *renderer, Rect unboundedRect, Rect boundedRect);
     void (*UpdateBounds)(EC_Renderer *renderer);
-    Bounds bounds;
+    AABB bounds;
     bool isVisible;
 };
 

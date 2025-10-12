@@ -25,7 +25,7 @@ void MeshManager_Free(MeshManager *manager);
 // -------------------------
 
 void MeshManager_Select(MeshManager* manager);
-void MeshManager_AddMesh(Mesh *mesh);
+void MeshManager_RegisterMesh(Mesh *mesh);
 void MeshManager_Cleanup();
 
 #endif

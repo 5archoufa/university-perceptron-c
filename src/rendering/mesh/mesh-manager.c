@@ -33,6 +33,11 @@ void MeshManager_Free(MeshManager *manager)
     }
     for (int i = 0; i < manager->meshes_size; i++)
     {
+        if (!manager->meshes[i])
+        {
+            continue;
+        }
+        manager->meshes[i]->refCount = 0;
         Mesh_Free(manager->meshes[i]);
     }
     free(manager->meshes);
@@ -43,7 +48,7 @@ void MeshManager_Free(MeshManager *manager)
 // Functions
 // -------------------------
 
-void MeshManager_Select(MeshManager* manager)
+void MeshManager_Select(MeshManager *manager)
 {
     _manager = manager;
 }
@@ -52,7 +57,8 @@ void MeshManager_Cleanup()
 {
     for (int i = 0; i < _manager->meshes_size; i++)
     {
-        if(_manager->meshes[i] == NULL) continue;
+        if (_manager->meshes[i] == NULL)
+            continue;
         if (_manager->meshes[i]->refCount <= 0)
         {
             Mesh_Free(_manager->meshes[i]);
@@ -61,7 +67,7 @@ void MeshManager_Cleanup()
     }
 }
 
-void MeshManager_AddMesh(Mesh *mesh)
+void MeshManager_RegisterMesh(Mesh *mesh)
 {
     // Check if any slots are free before-hand
     for (int i = 0; i < _manager->meshes_size; i++)

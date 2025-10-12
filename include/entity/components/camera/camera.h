@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include "ui/window.h"
 #include "entity/entity.h"
-#include "entity/components/renderer/bounds.h"
+#include "physics/aabb.h"
 #include "world/world.h"
 // OpenGL
 #define GLFW_INCLUDE_NONE

@@ -7,7 +7,7 @@ static MaterialManager *_manager = NULL;
 // Creation and Freeing
 // -------------------------
 
-void MaterialManager_Select(MaterialManager* manager)
+void MaterialManager_Select(MaterialManager *manager)
 {
     _manager = manager;
 }
@@ -36,6 +36,11 @@ void MaterialManager_Free(MaterialManager *manager)
     }
     for (int i = 0; i < manager->materials_size; i++)
     {
+        if (!manager->materials[i])
+        {
+            continue;
+        }
+        manager->materials[i]->refCount = 0;
         Material_Free(manager->materials[i]);
     }
     free(manager->materials);
@@ -50,7 +55,8 @@ void MaterialManager_Cleanup()
 {
     for (int i = 0; i < _manager->materials_size; i++)
     {
-        if(_manager->materials[i] == NULL) continue;
+        if (_manager->materials[i] == NULL)
+            continue;
         if (_manager->materials[i]->refCount <= 0)
         {
             Material_Free(_manager->materials[i]);
@@ -59,7 +65,7 @@ void MaterialManager_Cleanup()
     }
 }
 
-void MaterialManager_AddMaterial(Material *material)
+void MaterialManager_RegisterMaterial(Material *material)
 {
     // Check if any slots are free before-hand
     for (int i = 0; i < _manager->materials_size; i++)

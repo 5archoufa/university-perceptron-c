@@ -14,11 +14,11 @@ static void RD_Circle_UpdateBounds(EC_Renderer *renderer)
     RD_Circle *circle = (RD_Circle *)renderer->renderData;
     renderer->bounds.size = (V3){circle->radius * 2, circle->radius * 2, 0};
     V3 position = EC_WPos(renderer->component);
-    renderer->bounds.start = (V3){
+    renderer->bounds.min = (V3){
         position.x,
         position.y,
         position.z};
-    renderer->bounds.end = (V3){
+    renderer->bounds.max = (V3){
         position.x + circle->radius * 2,
         position.y + circle->radius * 2,
         position.z};

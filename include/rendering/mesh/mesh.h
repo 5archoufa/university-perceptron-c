@@ -37,9 +37,9 @@ typedef struct
     GLuint VAO;
     GLuint VBO;
     GLuint EBO;
-    size_t vertex_count;
+    size_t vertices_size;
     Vertex *vertices;
-    size_t index_count;
+    size_t indices_size;
     uint32_t *indices;
     V3 pivot;
     /// @brief Reference count for shared meshes. Do not modify this directly, use Mesh_AddRef and Mesh_Release.
@@ -66,5 +66,11 @@ Mesh *Mesh_CreatePlane(V2 meshScale, V2_INT vertexCount, uint32_t color, V2 pivo
 
 void Mesh_MarkReferenced(Mesh *mesh);
 void Mesh_MarkUnreferenced(Mesh *mesh);
+
+// ------------------------- 
+// Utilities 
+// -------------------------
+
+void Vertex_MinMax(size_t vertices_size, Vertex* vertices, V3 *min, V3 *max);
 
 #endif

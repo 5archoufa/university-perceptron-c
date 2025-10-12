@@ -1,11 +1,13 @@
 #ifndef SHADER_H
 #define SHADER_H
 
+// C
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+// Logging
 #include "logging/logger.h"
-
 // OpenGL
 #define GLFW_INCLUDE_NONE
 #include <glad/glad.h>
@@ -95,6 +97,8 @@ struct ShaderProperty
 
 struct Shader
 {
+    /// @brief ID used for sorting
+    uint32_t id;
     /// @brief Used to lookup shaders
     char *name;
     GLuint shaderProgram;

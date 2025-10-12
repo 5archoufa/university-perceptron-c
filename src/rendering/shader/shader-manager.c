@@ -69,6 +69,7 @@ void ShaderManager_Free(ShaderManager *manager)
     }
     for (int i = 0; i < manager->shaders_size; i++)
     {
+        if(!manager->shaders[i]) {continue;}
         Shader_Free(manager->shaders[i]);
     }
     free(manager->shaders);

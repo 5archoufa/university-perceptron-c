@@ -27,7 +27,7 @@ void MaterialManager_Free(MaterialManager *manager);
 // -------------------------
 
 void MaterialManager_Select(MaterialManager* manager);
-void MaterialManager_AddMaterial(Material *material);
+void MaterialManager_RegisterMaterial(Material *material);
 void MaterialManager_Cleanup();
 
 #endif

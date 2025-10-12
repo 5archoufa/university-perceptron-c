@@ -57,10 +57,10 @@ static void RD_Island_UpdateBounds(EC_Renderer *renderer)
     RD_Island *island = (RD_Island *)renderer->renderData;
     renderer->bounds.size = (V3){island->noise->width * island->unitsPerCell, 0, island->noise->height * island->unitsPerCell};
     // renderer->bounds.start = renderer->component->entity->transform.position;
-    renderer->bounds.end = (V3){
-        renderer->bounds.start.x + renderer->bounds.size.x,
-        renderer->bounds.start.y,
-        renderer->bounds.start.z + renderer->bounds.size.z};
+    renderer->bounds.max = (V3){
+        renderer->bounds.min.x + renderer->bounds.size.x,
+        renderer->bounds.min.y,
+        renderer->bounds.min.z + renderer->bounds.size.z};
 }
 
 // EC_Renderer *RD_Island_CreateWithRenderer(Entity *entity, int width, int height, float interpolation, float unitsPerCell)

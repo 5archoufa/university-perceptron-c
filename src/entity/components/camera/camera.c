@@ -8,7 +8,7 @@
 // Entities & Components
 #include "entity/entity.h"
 #include "entity/components/renderer/renderer.h"
-#include "entity/components/renderer/bounds.h"
+#include "physics/aabb.h"
 #include "utilities/math/stupid_math.h"
 #include "entity/components/ec_renderer3d/ec_renderer3d.h"
 // Shaders
@@ -280,7 +280,7 @@ static void Camera_Render_OpenGL(EC_Camera *ec_camera, EC_Renderer3D *ec_rendere
     // Draw
     // -------------------------
     glBindVertexArray(mesh->VAO);
-    glDrawElements(GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, mesh->indices_size, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
 

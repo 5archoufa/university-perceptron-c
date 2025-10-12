@@ -1,36 +1,47 @@
 #ifndef WORLD_H
 #define WORLD_H
 
+// C
 #include <stdlib.h>
-#include "entity/components/renderer/renderer.h"
-#include "entity/entity.h"
-#include "entity/components/ec_renderer3d/ec_renderer3d.h"
-#include "rendering/material/material-manager.h"
-#include "entity/components/lighting/ec_light.h"
 #include <stdint.h>
+// Entity
+#include "entity/entity.h"
+// Renderers
+#include "entity/components/renderer/renderer.h"
+#include "entity/components/ec_renderer3d/ec_renderer3d.h"
+// Material
+#include "rendering/material/material-manager.h"
+// Lighting
+#include "entity/components/lighting/ec_light.h"
+// Physics
+#include "physics/physics-manager.h"
 
 typedef struct World World;
 typedef struct EC_Light EC_Light;
 typedef struct EC_Renderer3D EC_Renderer3D;
+typedef struct PhysicsManager PhysicsManager;
 
 struct World
 {
     char *name;
-    // Entity
+    // ============ Entities ============ //
     Entity *parent;
-    // 2D Renderers
+    // ============ Physics ============ //
+    PhysicsManager *physicsManager;
+    // ============ Renderers ============ //
     int rendererCount;
     EC_Renderer **renderers;
     // 3D Renderers
     int rendererCount_3D;
     EC_Renderer3D **renderers_3D;
+    // ============ Lighting ============ //
     // Directional Lights
     size_t lights_directional_size;
     EC_Light **lights_directional;
     // Point Lights
     size_t lights_point_size;
     EC_Light **lights_point;
-    // Tracking
+    // ============ Tracking State ============ //
     /// @brief Whether or not this world is marked for freeing
     bool isMarkedForFreeing;
 };

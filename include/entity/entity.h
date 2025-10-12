@@ -15,6 +15,8 @@ typedef struct Component Component;
 typedef struct Transform Transform;
 typedef struct Quaternion Quaternion;
 typedef enum TransformSpace TransformSpace;
+typedef struct World World;
+typedef struct ELayer ELayer;
 
 typedef enum
 {
@@ -43,6 +45,9 @@ typedef enum
     EC_T_HUMAN,
     /* Player */
     EC_T_PLAYER,
+    /* Physics */
+    EC_T_COLLIDER,
+    EC_T_RIGIDBODY,
 } EC_Type;
 
 struct Component
@@ -61,11 +66,21 @@ struct Component
     void (*SetActive)(Component *, bool isActive);
 };
 
+struct ELayer{
+    char *name;
+    uint32_t id;
+};
+
 struct Entity
 {
+    uint32_t id;
     char *name;
     bool isActiveSelf;
     bool isActive;
+    // Layer
+    ELayer *e_layer;
+    // Static
+    bool isStatic;
     // Transform
     Transform transform;
     // Components
@@ -74,10 +89,17 @@ struct Entity
     Component **component_values;
 };
 
+// ------------------------- 
+// Layers 
+// -------------------------
+
+void Entity_InitSystem();
+
 // -------------------------
 // Creation & Freeing
 // -------------------------
 
+void Entity_FreeCache();
 Entity *Entity_Create(Entity *parent,  char *name, TransformSpace TS, V3 position, Quaternion rotation, V3 scale);
 Entity *Entity_Create_WorldParent(World* world, V3 position, Quaternion rotation, V3 scale);
 void Entity_Free(Entity *entity, bool updateParent);

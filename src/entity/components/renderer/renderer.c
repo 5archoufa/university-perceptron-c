@@ -28,7 +28,7 @@ EC_Renderer *EC_Renderer_Create(Entity *entity,
     renderer->renderData_Free = renderData_Free;
     renderer->Render = Render;
     renderer->Render3D = Render3D;
-    Bounds_Setup(&renderer->bounds, V3_ZERO, V3_ZERO, V3_ZERO);
+    AABB_Setup(&renderer->bounds, V3_ZERO, V3_ZERO, V3_ZERO);
     renderer->UpdateBounds = UpdateBounds;
     Component *component = Component_Create(renderer, entity, EC_T_RENDERER, EC_Renderer_Free, NULL, NULL, NULL, NULL, NULL);
     renderer->component = component;

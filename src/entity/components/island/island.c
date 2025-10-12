@@ -70,7 +70,7 @@ static EC_Island* EC_Island_Create(Entity* entity, EC_Renderer3D* ec_renderer3d_
 EC_Island* Prefab_Island(Entity* parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, V3 meshScale){
     LogCreate(&_logConfig, "Prefab_Island");
     Entity* entity = Entity_Create(parent, "Island", TS, position, rotation, scale);
-    float noiseWidth = 1000;
+    float noiseWidth = 400;
     // Island Renderer
     NoiseModifier modifiers[] = {
         {

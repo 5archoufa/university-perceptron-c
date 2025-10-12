@@ -16,7 +16,6 @@ static void EC_Planet_Update(Component *component)
     // Rotate Planet
     V3 addition = V3_SCALE(ec_planet->rotationSpeed, DeltaTime);
     T_LRot_Add(&component->entity->transform, addition);
-    printf("Planet Rotation: (%.2f, %.2f, %.2f)\n", component->entity->transform.l_rot.x, component->entity->transform.l_rot.y, component->entity->transform.l_rot.z);
 }
 
 static EC_Planet *EC_Planet_Create(Entity *entity, V3 rotationSpeed, LS_Directional *ls_directionalLight)

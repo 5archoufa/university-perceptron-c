@@ -80,7 +80,7 @@ void EC_Renderer3D_CalculateBounds(EC_Renderer3D *ec_renderer3d)
 {
     V3 min = {FLT_MAX, FLT_MAX, FLT_MAX};
     V3 max = {FLT_MIN, FLT_MIN, FLT_MIN};
-    for (int i = 0; i < ec_renderer3d->mesh->vertex_count; i++)
+    for (int i = 0; i < ec_renderer3d->mesh->vertices_size; i++)
     {
         Vertex vertex = ec_renderer3d->mesh->vertices[i];
         if (vertex.position.x < min.x)
@@ -96,8 +96,8 @@ void EC_Renderer3D_CalculateBounds(EC_Renderer3D *ec_renderer3d)
         if (vertex.position.z > max.z)
             max.z = vertex.position.z;
     }
-    ec_renderer3d->bounds.start = min;
-    ec_renderer3d->bounds.end = max;
+    ec_renderer3d->bounds.min = min;
+    ec_renderer3d->bounds.max = max;
     ec_renderer3d->bounds.size = (V3){max.x - min.x, max.y - min.y, max.z - min.z};
 }
 
@@ -105,9 +105,9 @@ void EC_Renderer3D_CalculateBounds(EC_Renderer3D *ec_renderer3d)
 // Prefabs
 // -------------------------
 
-EC_Renderer3D *Prefab_Cube(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, float meshSize, Texture *texture)
+EC_Renderer3D *Prefab_Cube(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, float meshSize, uint32_t color)
 {
     Entity *entity = Entity_Create(parent, "Cube", TS, position, rotation, scale);
-    Mesh *cubeMesh = Mesh_CreateCube((V3){meshSize, meshSize, meshSize}, V3_HALF, 0xffffffff);
+    Mesh *cubeMesh = Mesh_CreateCube((V3){meshSize, meshSize, meshSize}, V3_HALF, color);
     return EC_Renderer3D_Create(entity, cubeMesh, NULL);
 }

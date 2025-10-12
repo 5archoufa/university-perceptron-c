@@ -1,31 +1,31 @@
 #include "perceptron.h"
-#include <stdio.h>
-#include "neural_networks/layer.h"
-#include "neural_networks/neural_network.h"
-#include "ui/window.h"
-#include <unistd.h>
+// C
 #include <stdbool.h>
+#include <unistd.h>
 #include <time.h>
+#include <stddef.h>
 #include <stdio.h>
-#include "utilities/math/v3.h"
-#include "input/input_manager.h"
-#include "logging/logger.h"
-#include "game/game.h"
-#include "state_machine/instances/sm_perceptron/sm_perceptron.h"
-#include <time.h>
-#include <stddef.h> // for offsetof
 #include <math.h>
-#include <cglm/cglm.h>
-#include "utilities/file/file.h"
-// Managers
+// Window
+#include "ui/window.h"
+// Input
+#include "input/input_manager.h"
+// Logging
+#include "logging/logger.h"
+// Game
+#include "game/game.h"
+// Entity
+#include "entity/entity.h"
+// Mesh
 #include "rendering/mesh/mesh-manager.h"
+// Material
 #include "rendering/material/material-manager.h"
+#include "rendering/material/material.h"
+// Texture
 #include "rendering/texture/texture-manager.h"
+// Shader
 #include "rendering/shader/shader-manager.h"
 #include "rendering/shader/shader.h"
-#include "rendering/material/material.h"
-#include "entity/components/ec_renderer3d/ec_renderer3d.h"
-
 // OpenGL
 #define GLFW_INCLUDE_NONE
 #include <glad/glad.h>
@@ -48,7 +48,8 @@ float FixedDeltaTime = 1 / (float)FIXEDUPDATE_RATE_LIMIT;
 float PerceptronTime = 0.0f;
 GLuint ShaderProgram;
 // Window configuration - imageWidth/Height is the low-res render target, windowWidth/Height is the actual window size
-MyWindowConfig WindowConfig = {600, 375, 1280, 720};
+const float m = 0.4f;
+MyWindowConfig WindowConfig = {(int)(1280 * m), (int)(720 * m), 1280, 720};
 
 static LogConfig _logConfig = {
     "Perceptron", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
@@ -120,26 +121,37 @@ int main()
     glCullFace(GL_BACK);    // Cull back-facing triangles
     glFrontFace(GL_CCW);    // Counter-clockwise = front
 
-    // Input
+    // ============ Input ============ //
     InputManager_Init(window);
-    // Shaders
-    ShaderManager* shaderManager = ShaderManager_Create();
+
+    // ============ Shaders ============ //
+    ShaderManager *shaderManager = ShaderManager_Create();
     ShaderManager_Select(shaderManager);
-    Shader* toonShader = ShaderManager_Get(SHADER_TOON_SOLID);
-    // Materials
-    MaterialManager* materialManager = MaterialManager_Create();
+
+    // ============ Materials ============ //
+    MaterialManager *materialManager = MaterialManager_Create();
     MaterialManager_Select(materialManager);
-    // Meshes
-    MeshManager* meshManager = MeshManager_Create();
+
+    // ============ Meshes ============ //
+    MeshManager *meshManager = MeshManager_Create();
     MeshManager_Select(meshManager);
-    // Textures
-    TextureManager* textureManager = TextureManager_Create();
+
+    // ============ Textures ============ //
+    TextureManager *textureManager = TextureManager_Create();
     TextureManager_Select(textureManager);
 
-    // Setup default materials
-    Material* renderer3D_defaultMaterial = Material_Create(toonShader, 0, NULL);
+    // ============ 3D Renderers ============ //
+    Shader *toonShader = ShaderManager_Get(SHADER_TOON_SOLID);
+    Material *renderer3D_defaultMaterial = Material_Create(toonShader, 0, NULL);
     EC_Renderer3D_SetDefaultMaterial(renderer3D_defaultMaterial);
 
+    // ============ Entities ============ //
+    Entity_InitSystem();
+
+    // ============ Physics ============ //
+    PhysicsManager *physicsManager = PhysicsManager_Create();
+
+    // ============ Start Infinite Loop ============ //
     Game_Awake();
     Game_Start();
 
@@ -178,7 +190,7 @@ int main()
         // Update Entities
         if (updateAccumulator >= _desiredDeltaTime)
         {
-            DeltaTime = updateAccumulator;
+            // DeltaTime = updateAccumulator;
             updateAccumulator -= _desiredDeltaTime;
             frameCounter++;
             // Calculate Framerate
@@ -209,14 +221,30 @@ int main()
             fixedAccumulator -= FixedDeltaTime;
         }
         // Cleanup
-        
+
         physicsSteps = 0;
     }
 
-    // Free up other systems
+    // -------------------------
+    // Free
+    // -------------------------
+    // Input
     InputManager_Free();
+    // Game
     Game_Free();
-    SMPerceptron_Free();
+    // Physics
+    PhysicsManager_Free(physicsManager);
+    // Entities
+    Entity_FreeCache();
+    // Meshes
+    MeshManager_Free(meshManager);
+    // Shaders
+    ShaderManager_Free(shaderManager);
+    // Materials
+    MaterialManager_Free(materialManager);
+    // Textures
+    TextureManager_Free(textureManager);
+    // Game
     // MyWindow_Free(myWindow);
     // Cleanup GLFW
     glDeleteProgram(ShaderProgram);

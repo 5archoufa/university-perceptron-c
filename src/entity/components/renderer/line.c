@@ -12,8 +12,8 @@ static void RD_Line_Free(EC_Renderer *renderer)
 static void RD_Line_UpdateBounds(EC_Renderer *renderer)
 {
     RD_Line *line = (RD_Line *)renderer->renderData;
-    renderer->bounds.start = line->start;
-    renderer->bounds.end = line->end;
+    renderer->bounds.min = line->start;
+    renderer->bounds.max = line->end;
     renderer->bounds.size = V3_SIZE(line->start, line->end);
 }
 

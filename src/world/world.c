@@ -1,5 +1,9 @@
 #include "world/world.h"
+// Entity
+#include "entity/entity.h"
+// Logging
 #include "logging/logger.h"
+// Lighting
 #include "entity/components/lighting/ec_light.h"
 
 static LogConfig _logConfig = {"World", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
@@ -168,7 +172,25 @@ void World_Renderer3D_Add(EC_Renderer3D *ec_renderer3D)
     World *world = World_Get(ec_renderer3D->component->entity);
     world->rendererCount_3D++;
     world->renderers_3D = realloc(world->renderers_3D, sizeof(EC_Renderer3D) * world->rendererCount_3D);
-    world->renderers_3D[world->rendererCount_3D - 1] = ec_renderer3D;
+    if (world->rendererCount_3D == 1)
+    {
+        world->renderers_3D[0] = ec_renderer3D;
+    }
+    else
+    {
+        int i = world->rendererCount_3D - 1;
+        uint32_t shaderID = ec_renderer3D->material->shader->id;
+        for (; i >= 1; i--)
+        {
+            if (world->renderers_3D[i - 1]->material->shader->id > shaderID)
+                world->renderers_3D[i] = world->renderers_3D[i - 1];
+            else
+            {
+                world->renderers_3D[i] = ec_renderer3D;
+                break;
+            }
+        }
+    }
     printf("Added 3D Renderer to World '%s', total 3D renderers: %d\n", world->name, world->rendererCount_3D);
 }
 

@@ -13,6 +13,8 @@
 // Utilities
 // -------------------------
 
+static int _nextShaderID = 0;
+
 static LogConfig _logConfig = {"Shader", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
 
 inline static GLuint Shader_Compile(GLenum type, const char *source)
@@ -102,6 +104,8 @@ Shader* Shader_Create(const char *name, const char *vertexSource, const char *fr
     }
     Shader *shader = malloc(sizeof(Shader));
     shader->shaderProgram = shaderProgram;
+    // ID
+    shader->id = _nextShaderID++;
     // Name
     shader->name = malloc(sizeof(char) * 64);
     strcpy(shader->name, name);
