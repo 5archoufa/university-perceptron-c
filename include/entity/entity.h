@@ -48,6 +48,15 @@ typedef enum
     /* Physics */
     EC_T_COLLIDER,
     EC_T_RIGIDBODY,
+    /* GUI */
+    EC_T_GUI,
+    EC_T_GUI_WIDGET,
+    EC_T_W_TEXT,
+    EC_T_W_TEXT_DATETIME,
+    /* Trigle */
+    EC_T_GAME_TRIGLE,
+    /* State Machine */
+    EC_T_STATE_MACHINE,
 } EC_Type;
 
 struct Component
@@ -66,19 +75,12 @@ struct Component
     void (*SetActive)(Component *, bool isActive);
 };
 
-struct ELayer{
-    char *name;
-    uint32_t id;
-};
-
 struct Entity
 {
     uint32_t id;
     char *name;
     bool isActiveSelf;
     bool isActive;
-    // Layer
-    ELayer *e_layer;
     // Static
     bool isStatic;
     // Transform
@@ -87,20 +89,23 @@ struct Entity
     int componentCount;
     EC_Type *component_keys;
     Component **component_values;
+    // Layer
+    uint8_t layer;
+    // Tag
+    uint8_t tag;
 };
 
 // ------------------------- 
 // Layers 
 // -------------------------
 
-void Entity_InitSystem();
+void Entity_SetLayer(Entity *entity, uint8_t layer, bool updateChildren);
 
 // -------------------------
 // Creation & Freeing
 // -------------------------
 
-void Entity_FreeCache();
-Entity *Entity_Create(Entity *parent,  char *name, TransformSpace TS, V3 position, Quaternion rotation, V3 scale);
+Entity *Entity_Create(Entity *parent, bool isStatic, char *name, TransformSpace TS, V3 position, Quaternion rotation, V3 scale);
 Entity *Entity_Create_WorldParent(World* world, V3 position, Quaternion rotation, V3 scale);
 void Entity_Free(Entity *entity, bool updateParent);
 Component *Component_Create(void *self,
@@ -114,10 +119,11 @@ Component *Component_Create(void *self,
                             void (*FixedUpdate)(Component *));
 
 // -------------------------
-// Entity Management
+// Active Status
 // -------------------------
 
-void Component_SetActive(Component* component, bool isActive);
+void Entity_SetActiveSelf(Entity *entity, bool isActive);
+void Component_SetActiveSelf(Component* component, bool isActive);
 
 // -------------------------
 // Component Management

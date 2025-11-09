@@ -55,7 +55,6 @@ inline static GLuint Shader_CreateShaderProgram(const char *vertSrc, const char 
 
     glDeleteShader(vs);
     glDeleteShader(fs);
-    LogSuccess(&_logConfig, "Shader program created successfully.\n");
     return program;
 }
 
@@ -68,26 +67,25 @@ inline static void ShaderProperty_PartialInit(ShaderProperty *prop, const char *
     prop->isBig = isBig;
     prop->bigValue_default = (ShaderPropBigValue){
         .value = NULL,
-        .size = 0
-    };
+        .size = 0};
     prop->bigValue_previous = (ShaderPropBigValue){
         .value = NULL,
-        .size = 0
-    };
+        .size = 0};
 }
 
 // -------------------------
 // Creation and Freeing
 // -------------------------
 
-Shader* Shader_LoadFromFile(char *name, char *vertexPath, char *fragmentPath, size_t properties_size)
+Shader *Shader_LoadFromFile(char *name, char *vertexPath, char *fragmentPath, size_t properties_size)
 {
+    Log(&_logConfig, "Loading shader '%s' from files '%s' and '%s'", name, vertexPath, fragmentPath);
     // Load shader source code from file
     char *vertexSource = File_LoadStr(vertexPath);
     char *fragmentSource = File_LoadStr(fragmentPath);
 
     // Create shader
-    Shader* shader = Shader_Create(name, vertexSource, fragmentSource, properties_size);
+    Shader *shader = Shader_Create(name, vertexSource, fragmentSource, properties_size);
 
     // Free loaded source code
     free(vertexSource);
@@ -95,13 +93,14 @@ Shader* Shader_LoadFromFile(char *name, char *vertexPath, char *fragmentPath, si
     return shader;
 }
 
-Shader* Shader_Create(const char *name, const char *vertexSource, const char *fragmentSource, size_t properties_size)
+Shader *Shader_Create(const char *name, const char *vertexSource, const char *fragmentSource, size_t properties_size)
 {
     GLint shaderProgram = Shader_CreateShaderProgram(vertexSource, fragmentSource);
     if (shaderProgram == 0)
     {
         LogError(&_logConfig, "Error Creating Shader %s", name);
     }
+    LogSuccess(&_logConfig, "Shader program %s created successfully.\n", name);
     Shader *shader = malloc(sizeof(Shader));
     shader->shaderProgram = shaderProgram;
     // ID
@@ -140,91 +139,91 @@ void Shader_Free(Shader *shader)
 // Property Initializers
 // -------------------------
 
-void ShaderProperty_InitDefault_Float(Shader* shader, int index, const char *name, float value)
+void ShaderProperty_InitDefault_Float(Shader *shader, int index, const char *name, float value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_FLOAT, false);
     shader->properties[index].smallValue_default.floatValue = value;
 }
 
-void ShaderProperty_InitDefault_Vec2(Shader* shader, int index, const char *name, vec2 value)
+void ShaderProperty_InitDefault_Vec2(Shader *shader, int index, const char *name, vec2 value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_VEC2, false);
     memcpy(&shader->properties[index].smallValue_default.vec2Value, value, sizeof(vec2));
 }
 
-void ShaderProperty_InitDefault_Vec3(Shader* shader, int index, const char *name, vec3 value)
+void ShaderProperty_InitDefault_Vec3(Shader *shader, int index, const char *name, vec3 value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_VEC3, false);
     memcpy(&shader->properties[index].smallValue_default.vec3Value, value, sizeof(vec3));
 }
 
-void ShaderProperty_InitDefault_Vec4(Shader* shader, int index, const char *name, vec4 value)
+void ShaderProperty_InitDefault_Vec4(Shader *shader, int index, const char *name, vec4 value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_VEC4, false);
     memcpy(&shader->properties[index].smallValue_default.vec4Value, value, sizeof(vec4));
 }
 
-void ShaderProperty_InitDefault_Int(Shader* shader, int index, const char *name, int value)
+void ShaderProperty_InitDefault_Int(Shader *shader, int index, const char *name, int value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_INT, false);
     shader->properties[index].smallValue_default.intValue = value;
 }
 
-void ShaderProperty_InitDefault_IVec2(Shader* shader, int index, const char *name, ivec2 value)
+void ShaderProperty_InitDefault_IVec2(Shader *shader, int index, const char *name, ivec2 value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_IVEC2, false);
     memcpy(&shader->properties[index].smallValue_default.ivec2Value, value, sizeof(ivec2));
 }
 
-void ShaderProperty_InitDefault_IVec3(Shader* shader, int index, const char *name, ivec3 value)
+void ShaderProperty_InitDefault_IVec3(Shader *shader, int index, const char *name, ivec3 value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_IVEC3, false);
     memcpy(&shader->properties[index].smallValue_default.ivec3Value, value, sizeof(ivec3));
 }
 
-void ShaderProperty_InitDefault_IVec4(Shader* shader, int index, const char *name, ivec4 value)
+void ShaderProperty_InitDefault_IVec4(Shader *shader, int index, const char *name, ivec4 value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_IVEC4, false);
     memcpy(&shader->properties[index].smallValue_default.ivec4Value, value, sizeof(ivec4));
 }
 
-void ShaderProperty_InitDefault_UInt(Shader* shader, int index, const char *name, unsigned int value)
+void ShaderProperty_InitDefault_UInt(Shader *shader, int index, const char *name, unsigned int value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_UINT, false);
     shader->properties[index].smallValue_default.uintValue = value;
 }
 
-void ShaderProperty_InitDefault_Mat2(Shader* shader, int index, const char *name, mat2 value)
+void ShaderProperty_InitDefault_Mat2(Shader *shader, int index, const char *name, mat2 value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_MAT2, false);
     memcpy(&shader->properties[index].smallValue_default.mat2Value, value, sizeof(mat2));
 }
 
-void ShaderProperty_InitDefault_Mat3(Shader* shader, int index, const char *name, mat3 value)
+void ShaderProperty_InitDefault_Mat3(Shader *shader, int index, const char *name, mat3 value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_MAT3, false);
     memcpy(&shader->properties[index].smallValue_default.mat3Value, value, sizeof(mat3));
 }
 
-void ShaderProperty_InitDefault_Sampler2D(Shader* shader, int index, const char *name, GLuint textureID)
+void ShaderProperty_InitDefault_Sampler2D(Shader *shader, int index, const char *name, GLuint textureID)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_SAMPLER2D, false);
     shader->properties[index].smallValue_default.sampler2DValue = textureID;
 }
 
-void ShaderProperty_InitDefault_Mat4(Shader* shader, int index, const char *name, mat4 value)
+void ShaderProperty_InitDefault_Mat4(Shader *shader, int index, const char *name, mat4 value)
 {
     GLint loc = glGetUniformLocation(shader->shaderProgram, name);
     ShaderProperty_PartialInit(&shader->properties[index], name, loc, MPT_MAT4, false);

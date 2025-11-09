@@ -18,7 +18,7 @@ layout(std140, binding = 0) uniform ShaderGlobalData {
     vec4 camera_position;
 
     float time;
-    float _pad_world_0;
+    float timeOfDay;
     float _pad_world_1;
     float _pad_world_2;
 
@@ -72,7 +72,7 @@ float waveHeight(vec2 posXZ, float t) {
     // mix smooth sine waves with a touch of spatial randomness
     float n = hash(floor(q * 5.0));
     float base = (w1 + w2 + w3 * 0.5) / 2.5;
-    base += n * 0.2; // add subtle irregularity (doesn’t flicker)
+    base += n * 0.2; // add subtle irregularity (doesn't flicker)
 
     return base * waveAmplitude;
 }
@@ -93,7 +93,8 @@ void main()
     // compute normal from finite differences
     vec3 T_x = vec3(fdEps, hX - h0, 0.0);
     vec3 T_z = vec3(0.0, hZ - h0, fdEps);
-    vec3 normalObj = normalize(cross(T_x, T_z));
+    // FIXED: Reversed cross product order to make normals point upward
+    vec3 normalObj = normalize(cross(T_z, T_x));
 
     // transform to world space
     vec4 worldPosition = model * vec4(displaced, 1.0);

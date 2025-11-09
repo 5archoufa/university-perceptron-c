@@ -1,7 +1,5 @@
 #include "entity/components/island/island.h"
-#include "entity/components/renderer/rd_island.h"
-#include "input/input_manager.h"
-#include "entity/components/ec_renderer3d/ec_renderer3d.h"
+#include "entity/components/ec_mesh_renderer/ec_mesh_renderer.h"
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include "logging/logger.h"
@@ -33,43 +31,22 @@ static const NoiseLayer ISLAND_LAYERS[] = {
 
 static void EC_Island_Free(Component* component){
     EC_Island* island = (EC_Island*)component->self;
-    InputContext_Free(island->inputContext);
+    Noise_Free(island->noise);
     free(island);
 }
 
-static void EC_Island_Update(Component* component){
-    EC_Island* island = (EC_Island*)component->self;
-    if(island->inputContext->keys[INPUT_INTER_UP].isPressed){
-        
-    }else if(island->inputContext->keys[INPUT_INTER_DOWN].isPressed){
-        
-    }
-}
-
-static EC_Island* EC_Island_Create(Entity* entity, EC_Renderer3D* ec_renderer3d_island){
+static EC_Island* EC_Island_Create(Entity* entity, Noise* noise, EC_MeshRenderer* ec_meshRenderer_island){
     EC_Island* ec_island = malloc(sizeof(EC_Island));
-    ec_island->ec_renderer3d_island = ec_renderer3d_island;
-    // Input Context
-    int keys[] = {
-        GLFW_KEY_8,
-        GLFW_KEY_2
-    };
-    InputContext* inputContext = InputContext_Create("IslandInputContext",
-                                                         2,
-                                                         keys,
-                                                         0,
-                                                         NULL,
-                                                         0,
-                                                         NULL);
-    ec_island->inputContext = inputContext;
+    ec_island->ec_meshRenderer_island = ec_meshRenderer_island;
+    ec_island->noise = noise;
     // Component
-    ec_island->component = Component_Create(ec_island, entity, EC_T_ISLAND, EC_Island_Free, NULL, NULL, EC_Island_Update, NULL, NULL);
+    ec_island->component = Component_Create(ec_island, entity, EC_T_ISLAND, EC_Island_Free, NULL, NULL, NULL, NULL, NULL);
     return ec_island;
 }
 
 EC_Island* Prefab_Island(Entity* parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, V3 meshScale){
     LogCreate(&_logConfig, "Prefab_Island");
-    Entity* entity = Entity_Create(parent, "Island", TS, position, rotation, scale);
+    Entity* entity = Entity_Create(parent, true, "Island", TS, position, rotation, scale);
     float noiseWidth = 400;
     // Island Renderer
     NoiseModifier modifiers[] = {
@@ -84,17 +61,25 @@ EC_Island* Prefab_Island(Entity* parent, TransformSpace TS, V3 position, Quatern
     Noise_RecalculateMap(noise);
     // Create Mesh
     Mesh* islandMesh = Noise_CreateMesh(noise, meshScale, ISLAND_LAYERS_SIZE, ISLAND_LAYERS, true, NULL, 10, (V3){0.5, 0, 0.5});
+    // create Collider
+    ColliderData colliderData = {.mesh.mesh = islandMesh};
+    EC_Collider* ec_collider = EC_Collider_Create(entity, V3_ZERO, false, EC_COLLIDER_MESH, colliderData);
+    // Temporary fix: add a rigidbody to the island so we can see it
+    // EC_RigidBody* ec_rigidbody = EC_RigidBody_Create(entity, ec_collider, 0.0f, false, RigidBodyConstraints_FreezePosition());
     // Material
-    Shader* islandShader = ShaderManager_Get(SHADER_TOON_SOLID);
+    Shader* islandShader = ShaderManager_Get(SHADER_ISLAND);
     Material* islandMaterial = Material_Create(islandShader, 0, NULL);
-    // Renderer
-    EC_Renderer3D* ec_renderer3d_island = EC_Renderer3D_Create(entity, islandMesh, islandMaterial);
+    EC_MeshRenderer* ec_meshRenderer_island = EC_MeshRenderer_Create(entity, islandMesh, meshScale, islandMaterial);
     // Island
-    EC_Island* e_island = EC_Island_Create(entity, ec_renderer3d_island);
-    // Print out the island's components
-    for(int i = 0; i < entity->componentCount; i++){
-        Component* comp = entity->component_values[i];
-        Log(&_logConfig, "Island's component %d: Type %d, Free: %p", i, comp->type, comp->Free);
-    }
+    EC_Island* e_island = EC_Island_Create(entity, noise, ec_meshRenderer_island);
     return e_island;
+}
+
+inline V3 EC_Island_GetPositionOnLand(EC_Island* ec_island, V3 position){
+    Noise* noise = ec_island->noise;
+    EC_MeshRenderer *ec_meshRenderer = ec_island->ec_meshRenderer_island;
+    V3 islandPos = EC_WPos(ec_island->component);
+    V3 positionIslandSpace = V3_SUB(position, islandPos);
+    float yIslandSpace = Noise_GetMeshHeightAt(noise, positionIslandSpace, ec_meshRenderer->meshScale, ec_meshRenderer->mesh->pivot);
+    return (V3){position.x, yIslandSpace + islandPos.y, position.z};
 }

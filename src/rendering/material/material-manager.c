@@ -17,6 +17,7 @@ MaterialManager *MaterialManager_Create()
     MaterialManager *manager = malloc(sizeof(MaterialManager));
     manager->materials_size = 0;
     manager->materials = NULL;
+    manager->nextMaterialId = 1;
 
     // Pre-allocate some space
     manager->materials_size = 10;
@@ -25,6 +26,7 @@ MaterialManager *MaterialManager_Create()
     {
         manager->materials[i] = NULL;
     }
+    MaterialManager_Select(manager);
     return manager;
 }
 
@@ -79,4 +81,5 @@ void MaterialManager_RegisterMaterial(Material *material)
     _manager->materials_size++;
     _manager->materials = realloc(_manager->materials, sizeof(Material *) * _manager->materials_size);
     _manager->materials[_manager->materials_size - 1] = material;
+    material->id = _manager->nextMaterialId++;
 }

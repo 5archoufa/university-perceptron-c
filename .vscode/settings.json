@@ -80,7 +80,7 @@
         "file.h": "c",
         "shader.h": "c",
         "texture.h": "c",
-        "ec_renderer3d.h": "c",
+        "ec_meshRenderer.h": "c",
         "glfw3.h": "c",
         "glad.h": "c",
         "cglm.h": "c",
@@ -107,7 +107,14 @@
         "ls_point.h": "c",
         "ec_human.h": "c",
         "ec_rigidbody.h": "c",
-        "ls_directional.h": "c"
+        "ls_directional.h": "c",
+        "stb_truetype.h": "c",
+        "text.h": "c",
+        "mesh-manager.h": "c",
+        "physics-manager.h": "c",
+        "w_text.h": "c",
+        "ec_mesh_renderer.h": "c",
+        "ec_camera_controller.h": "c"
     },
     "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/gcc.exe",
 }

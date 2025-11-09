@@ -13,9 +13,8 @@ struct EC_Planet
     Component *component;
     EC_Light *ec_light;
     LS_Directional *ls_directionalLight;
-    V3 rotationSpeed;
 };
 
-EC_Planet *Prefab_Planet(Entity *parent, V3 rotationSpeed, uint32_t color, float intensity, float timeOfDay);
+EC_Planet *Prefab_Planet(Entity *parent, uint32_t color, float intensity);
 
 #endif

@@ -23,43 +23,46 @@ void EC_NeuralNetwork_Free(Component *component)
 
 EC_NN *Prefab_NeuralNetwork(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, NeuralNetwork *neuralNetwork)
 {
-    Entity *e_nn = Entity_Create(parent, "NeuralNetwork", TS, position, rotation, scale);
+    Entity *e_nn = Entity_Create(parent, false, "NeuralNetwork", TS, position, rotation, scale);
     EC_NN_Layer **ec_layers = malloc(sizeof(EC_NN_Layer *) * neuralNetwork->layerCount);
-    float layerWidth = EC_NEURON_CIRCLE_RADIUS;
-    float layerSpacing = layerWidth * 4.0;
+    float layerWidth = EC_NEURON_WIDTH;
+    float layerSpacing = 3;
     // Calculate X position
     // Calculate Y position
-    float tallestLayer = -1.0;
+    float tallestLayer = 0;
     for (int i = 0; i < neuralNetwork->layerCount; i++)
     {
-        float height = EC_Layer_GetHeight(neuralNetwork->layers[i].neurons_size);
-        if (height > tallestLayer)
+        if (neuralNetwork->layers[i].neurons_size > tallestLayer)
         {
-            tallestLayer = height;
+            tallestLayer = neuralNetwork->layers[i].neurons_size;
         }
     }
-    float x = 0.5 * (((neuralNetwork->layerCount - 1) * layerSpacing) - (layerWidth * neuralNetwork->layerCount));
-    V3 layer_LPos = {x, 0.5 * tallestLayer, 0.0};
+    tallestLayer = EC_Layer_GetHeight(tallestLayer);
+    float width = ((neuralNetwork->layerCount - 1) * layerSpacing) + (layerWidth * neuralNetwork->layerCount);
+    V3 layer_LPos = {
+        -0.5 * width,
+        0.001,
+        0};
     // Create Layers
     for (int i = 0; i < neuralNetwork->layerCount; i++)
     {
         ec_layers[i] = Prefab_Layer(e_nn, TS_LOCAL, layer_LPos, QUATERNION_IDENTITY, V3_ONE, &neuralNetwork->layers[i]);
-        x += layerWidth + layerSpacing;
+        layer_LPos.x += layerWidth + layerSpacing;
     }
     // Create Links
     for (int la = 0; la < neuralNetwork->layerCount - 1; la++)
     {
-        Layer* layerA = &neuralNetwork->layers[la];
+        Layer *layerA = &neuralNetwork->layers[la];
         int lb = la + 1;
-        Layer* layerB = &neuralNetwork->layers[lb];
+        Layer *layerB = &neuralNetwork->layers[lb];
         for (int na = 0; na < layerA->neurons_size; na++)
         {
             EC_NN_Neuron *neuronA = ec_layers[la]->neurons[na];
             for (int nb = 0; nb < layerB->neurons_size; nb++)
             {
                 EC_NN_Neuron *neuronB = ec_layers[lb]->neurons[nb];
-                printf("Weight[%d] is %f\n", na, layerB->neurons[nb].weights[na]);
-                Prefab_NN_Link(e_nn, neuronA, neuronB, layerB->neurons[nb].weights[na]);
+                // printf("Weight[%d] is %f\n", na, layerB->neurons[nb].weights[na]);
+                // Prefab_NN_Link(e_nn, neuronA, neuronB, layerB->neurons[nb].weights[na]);
             }
         }
     }

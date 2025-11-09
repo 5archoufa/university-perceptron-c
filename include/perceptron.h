@@ -35,19 +35,17 @@ extern const V3 WORLD_BACK;
 // -------------------------
 // Layers
 // -------------------------
-#define ELAYERS_SIZE 3
-#define ELAYERS                \
-    {                                 \
-        {.name = "Default"}, \
-        {.name = "Terrain"}, \
-        {.name = "UI"}}
+// LAYERS MUST NOT EXCEED 32
+#define E_LAYER_DEFAULT 0
+#define E_LAYER_CREATURE 1
+#define E_LAYER_RAYCAST 2
+#define E_LAYER_TERRAIN 3
+#define E_LAYER_TRIGLE 4
+#define E_LAYER_GUI 5
 
-#define ELAYERS_PHYSICS_FILTER                                       \
-    {                                                  \
-        /*            Default     Terrain        UI*/  \
-        /* Default */ {true, /* */ true, /* */ false}, \
-        /* Terrain */ {true, /* */ false, /**/ false}, \
-        /* UI      */ {false, /**/ false, /**/ false}, \
-    }
+// -------------------------
+// Tags
+// -------------------------
+#define E_TAG_NONE 0
 
 #endif

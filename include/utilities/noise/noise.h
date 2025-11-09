@@ -42,8 +42,17 @@ typedef struct
     uint32_t color;
 } NoiseLayer;
 
+// ------------------------- 
+// Creation & Freeing 
+// -------------------------
+
 Noise *Noise_Create(int width, int height, float interpolation, float min, float max, size_t modifiers_size, NoiseModifier* modifiers);
 void Noise_Free(Noise *noise);
+
+// ------------------------- 
+// Unorganized 
+// -------------------------
+
 void Noise_Update(Noise *noise, int width, int height, float interpolation, float min, float max, bool forceUpdate);
 void Noise_Regenerate(Noise *noise);
 void Noise_RecalculateMap(Noise *noise);
@@ -51,4 +60,10 @@ Mesh *Noise_CreateMesh(Noise *noise, V3 meshScale, int layers_size, const NoiseL
 void Noise_Modifier_Mask_Circle(Noise *noise, int argCount, void** args);
 Mesh *Mesh_CreatePlane(V2 meshScale, V2_INT vertexCount, uint32_t color, V2 pivot);
 void Noise_AddModifier(Noise *noise, NoiseModifier modifier);
+
+// ------------------------- 
+// Utilities 
+// -------------------------
+
+float Noise_GetMeshHeightAt(Noise *noise, V3 positionIslandSpace, V3 meshScale, V3 pivot);
 #endif

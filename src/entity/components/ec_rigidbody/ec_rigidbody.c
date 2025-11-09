@@ -52,6 +52,13 @@ RigidBodyConstraints RigidBodyConstraints_FreezeRotation()
 // Creation & Freeing
 // -------------------------
 
+static void EC_RigidBody_Free(Component *component)
+{
+    EC_RigidBody *ec_rigidbody = component->self;
+    PhysicsManager_RemoveRigidBody(ec_rigidbody);
+    free(ec_rigidbody);
+}
+
 EC_RigidBody *EC_RigidBody_Create(Entity *entity, EC_Collider *ec_collider, float mass, bool useGravity, RigidBodyConstraints constraints)
 {
     EC_RigidBody *ec_rigidbody = malloc(sizeof(EC_RigidBody));
@@ -68,13 +75,16 @@ EC_RigidBody *EC_RigidBody_Create(Entity *entity, EC_Collider *ec_collider, floa
     ec_rigidbody->angularVelocity = V3_ZERO;
     ec_rigidbody->forceAccum = V3_ZERO;
     ec_rigidbody->torqueAccum = V3_ZERO;
-    ec_rigidbody->linearDamping = 0.99f;
-    ec_rigidbody->angularDamping = 0.99f;
+    ec_rigidbody->linearDamping = 0.5f;  // Increased from 0.1f for better stability
+    ec_rigidbody->angularDamping = 0.5f; // Increased from 0.1f for better stability
+    // Sleeping system
+    ec_rigidbody->isSleeping = false;
+    ec_rigidbody->sleepTimer = 0.0f;
     // Constraints
     ec_rigidbody->constraints = constraints;
     // Component
-    ec_rigidbody->component = Component_Create(ec_rigidbody, entity, EC_T_RIGIDBODY, NULL, NULL, NULL, NULL, NULL, NULL);
+    ec_rigidbody->component = Component_Create(ec_rigidbody, entity, EC_T_RIGIDBODY, EC_RigidBody_Free, NULL, NULL, NULL, NULL, NULL);
     // Register with Physics Manager
-    //PhysicsManager_RegisterRigidBody(ec_rigidbody);
+    PhysicsManager_RegisterRigidBody(ec_rigidbody);
     return ec_rigidbody;
 }

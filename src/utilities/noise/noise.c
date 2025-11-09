@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <math.h>
 #include "rendering/texture/texture.h"
-#include "entity/components/renderer/renderer.h"
 
 typedef enum
 {
@@ -299,6 +298,23 @@ static NoiseLayer *NoiseLayer_Get(Noise *noise, size_t layers_size, const NoiseL
     return &layers[lowestLayer];
 }
 
+inline float Noise_GetMeshHeightAt(Noise *noise, V3 positionIslandSpace, V3 meshScale, V3 pivot)
+{
+    float dy = meshScale.y / (float)(noise->max - noise->min);
+    float yOffset = -pivot.y * meshScale.y;
+    // printf("Pivot: %f, %f, %f, LocalPos originally: %.2f, %.2f\n", pivot.x, pivot.y, pivot.z, positionIslandSpace.x, positionIslandSpace.z);
+    positionIslandSpace.x += pivot.x * meshScale.x;
+    positionIslandSpace.z += pivot.z * meshScale.z;
+    // printf("Transformed local pos: %.2f, %.2f\n", positionIslandSpace.x, positionIslandSpace.z);
+    int x = (int)(positionIslandSpace.x / meshScale.x * (float)(noise->width - 1));
+    int y = (int)(positionIslandSpace.z / meshScale.z * (float)(noise->height - 1));
+    // printf("MeshScale: %f, %f, %f Player local pos: %.2f, %.2f -> Noise coords: %d, %d\n", meshScale.x, meshScale.y, meshScale.z, positionIslandSpace.x, positionIslandSpace.z, x, y);
+    if(x < 0 || x >= noise->width || y < 0 || y >= noise->height){
+        return positionIslandSpace.y;
+    }
+    return noise->map[x][y] * dy + yOffset;
+}
+
 Mesh *Noise_CreateMesh(Noise *noise, V3 meshScale, int layers_size, const NoiseLayer *layers, bool usePixelColors, Texture *texture, int density, V3 pivot)
 {
     float dx = meshScale.x / (float)noise->width;
@@ -353,7 +369,7 @@ Mesh *Noise_CreateMesh(Noise *noise, V3 meshScale, int layers_size, const NoiseL
             }
             else
             {
-                vertices[y * noise_width + x].color = PIXEL_WHITE;
+                vertices[y * noise_width + x].color = 0xFFFFFFFF;
             }
         }
     }
@@ -408,14 +424,15 @@ Mesh *Noise_CreateMesh(Noise *noise, V3 meshScale, int layers_size, const NoiseL
         {
             int yw = y * noise_width;
             indices[index++] = yw + x;
-            indices[index++] = yw + noise_width + x;
             indices[index++] = yw + (x + 1);
             indices[index++] = yw + noise_width + x;
+
+            indices[index++] = yw + noise_width + x;
+            indices[index++] = yw + (x + 1);
             indices[index++] = yw + noise_width + (x + 1);
-            indices[index++] = yw + (x + 1);
         }
     }
-    Mesh *mesh = Mesh_Create(vertices_size, vertices, indices_size, indices, pivot);
+    Mesh *mesh = Mesh_Create(true, vertices_size, vertices, indices_size, indices, pivot);
     free(vertices);
     free(indices);
     return mesh;

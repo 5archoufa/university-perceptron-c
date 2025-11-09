@@ -24,6 +24,7 @@ Material *Material_Create(Shader *shader, size_t instanceProps_size, ShaderPrope
 {
     Material *material = malloc(sizeof(Material));
     material->shader = shader;
+    material->id = 0;
     material->refCount = 0;
     material->instanceProps_size = instanceProps_size;
     size_t arraySize = sizeof(ShaderPropertyInstance) * instanceProps_size;
@@ -70,6 +71,15 @@ void Material_MarkUnreferenced(Material *material)
 static ShaderPropertyInstance *Material_AddPropInstance(Material *material, char *name)
 {
     Shader *shader = material->shader;
+    // Check if it already exists
+    for (int i = 0; i < material->instanceProps_size; i++)
+    {
+        int shaderPropIndex = material->instanceProps[i].shaderPropIndex;
+        if (strcmp(shader->properties[shaderPropIndex].name, name) == 0)
+        {
+            return &material->instanceProps[i];
+        }
+    }
     // Determine Shader prop Index
     int shaderPropIndex = -1;
     for (int i = 0; i < shader->properties_size; i++)

@@ -21,50 +21,7 @@ const Quaternion QUATERNION_IDENTITY = {1, 0, 0, 0};
 
 static LogConfig _logConfig = {"Transform", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
 
-static inline void Quat_from_mat4(Quaternion *q, const mat4 m, V3 scale)
-{
-    // Retrieve scale from matrix columns
-    float m00 = m[0][0] / scale.x, m01 = m[0][1] / scale.x, m02 = m[0][2] / scale.x;
-    float m10 = m[1][0] / scale.y, m11 = m[1][1] / scale.y, m12 = m[1][2] / scale.y;
-    float m20 = m[2][0] / scale.z, m21 = m[2][1] / scale.z, m22 = m[2][2] / scale.z;
-
-    float trace = m00 + m11 + m22;
-
-    if (trace > 0.0f)
-    {
-        float s = sqrtf(trace + 1.0f) * 2.0f; // s = 4*w
-        q->w = 0.25f * s;
-        q->x = (m21 - m12) / s;
-        q->y = (m02 - m20) / s;
-        q->z = (m10 - m01) / s;
-    }
-    else if ((m00 > m11) && (m00 > m22))
-    {
-        float s = sqrtf(1.0f + m00 - m11 - m22) * 2.0f; // s = 4*x
-        q->w = (m21 - m12) / s;
-        q->x = 0.25f * s;
-        q->y = (m01 + m10) / s;
-        q->z = (m02 + m20) / s;
-    }
-    else if (m11 > m22)
-    {
-        float s = sqrtf(1.0f + m11 - m00 - m22) * 2.0f; // s = 4*y
-        q->w = (m02 - m20) / s;
-        q->x = (m01 + m10) / s;
-        q->y = 0.25f * s;
-        q->z = (m12 + m21) / s;
-    }
-    else
-    {
-        float s = sqrtf(1.0f + m22 - m00 - m11) * 2.0f; // s = 4*z
-        q->w = (m10 - m01) / s;
-        q->x = (m02 + m20) / s;
-        q->y = (m12 + m21) / s;
-        q->z = 0.25f * s;
-    }
-}
-
-/// @brief Converts a quaternion to a 4x4 rotation matrix (row-major)
+/// @brief Converts a quaternion to a 4x4 rotation matrix (COLUMN-MAJOR)
 static inline void Quat_to_mat4(const Quaternion *q, mat4 dest)
 {
     float xx = q->x * q->x;
@@ -80,26 +37,73 @@ static inline void Quat_to_mat4(const Quaternion *q, mat4 dest)
     // Zero out matrix
     memset(dest, 0, sizeof(mat4));
 
-    // Row-major rotation matrix
+    // COLUMN-MAJOR rotation matrix
+    // Column 0 (Right vector)
     dest[0][0] = 1.0f - 2.0f * (yy + zz);
-    dest[0][1] = 2.0f * (xy - wz);
-    dest[0][2] = 2.0f * (xz + wy);
+    dest[0][1] = 2.0f * (xy + wz);
+    dest[0][2] = 2.0f * (xz - wy);
     dest[0][3] = 0.0f;
 
-    dest[1][0] = 2.0f * (xy + wz);
+    // Column 1 (Up vector)
+    dest[1][0] = 2.0f * (xy - wz);
     dest[1][1] = 1.0f - 2.0f * (xx + zz);
-    dest[1][2] = 2.0f * (yz - wx);
+    dest[1][2] = 2.0f * (yz + wx);
     dest[1][3] = 0.0f;
 
-    dest[2][0] = 2.0f * (xz - wy);
-    dest[2][1] = 2.0f * (yz + wx);
+    // Column 2 (Forward vector)
+    dest[2][0] = 2.0f * (xz + wy);
+    dest[2][1] = 2.0f * (yz - wx);
     dest[2][2] = 1.0f - 2.0f * (xx + yy);
     dest[2][3] = 0.0f;
 
+    // Column 3 (Translation - will be set separately)
     dest[3][0] = 0.0f;
     dest[3][1] = 0.0f;
     dest[3][2] = 0.0f;
     dest[3][3] = 1.0f;
+}
+
+static inline void Quat_from_mat4(Quaternion *q, const mat4 m, V3 scale)
+{
+    // Remove scale from matrix columns
+    float m00 = m[0][0] / scale.x, m01 = m[0][1] / scale.x, m02 = m[0][2] / scale.x;
+    float m10 = m[1][0] / scale.y, m11 = m[1][1] / scale.y, m12 = m[1][2] / scale.y;
+    float m20 = m[2][0] / scale.z, m21 = m[2][1] / scale.z, m22 = m[2][2] / scale.z;
+
+    float trace = m00 + m11 + m22;
+
+    if (trace > 0.0f)
+    {
+        float s = sqrtf(trace + 1.0f) * 2.0f; // s = 4*w
+        q->w = 0.25f * s;
+        q->x = (m12 - m21) / s;
+        q->y = (m20 - m02) / s;
+        q->z = (m01 - m10) / s;
+    }
+    else if ((m00 > m11) && (m00 > m22))
+    {
+        float s = sqrtf(1.0f + m00 - m11 - m22) * 2.0f; // s = 4*x
+        q->w = (m12 - m21) / s;
+        q->x = 0.25f * s;
+        q->y = (m01 + m10) / s;
+        q->z = (m02 + m20) / s;
+    }
+    else if (m11 > m22)
+    {
+        float s = sqrtf(1.0f + m11 - m00 - m22) * 2.0f; // s = 4*y
+        q->w = (m20 - m02) / s;
+        q->x = (m01 + m10) / s;
+        q->y = 0.25f * s;
+        q->z = (m12 + m21) / s;
+    }
+    else
+    {
+        float s = sqrtf(1.0f + m22 - m00 - m11) * 2.0f; // s = 4*z
+        q->w = (m01 - m10) / s;
+        q->x = (m02 + m20) / s;
+        q->y = (m12 + m21) / s;
+        q->z = 0.25f * s;
+    }
 }
 
 /// @brief Marks the transform and all its children as dirty
@@ -121,11 +125,12 @@ static void Transform_MarkDirty(Transform *transform)
 inline static void Transform_SetLPos(Transform *transform, V3 *position, bool setDirty)
 {
     transform->l_pos = *position;
-    // Update local matrix
+    // CRITICAL FIX: Translation is stored in COLUMN 3, not row 3
+    // mat[column][row] in column-major
     transform->l_matrix[3][0] = position->x;
     transform->l_matrix[3][1] = position->y;
     transform->l_matrix[3][2] = position->z;
-    // Mark as dirty
+
     if (setDirty)
     {
         Transform_MarkDirty(transform);
@@ -135,20 +140,41 @@ inline static void Transform_SetLPos(Transform *transform, V3 *position, bool se
 inline static void Transform_SetLRot(Transform *transform, Quaternion *rotation, bool setDirty)
 {
     transform->l_rot = *rotation;
-    // Rotation
+
+    // Create rotation matrix
     mat4 rot;
     Quat_to_mat4(rotation, rot);
-    // Scale
+
+    // Create scale matrix
     mat4 scale = GLM_MAT4_IDENTITY_INIT;
     scale[0][0] = transform->l_scale.x;
     scale[1][1] = transform->l_scale.y;
     scale[2][2] = transform->l_scale.z;
-    // Combine rotation * scale
+
+    // Combine: result = rotation * scale
     mat4 rs;
     glm_mat4_mul(rot, scale, rs);
-    // Apply translation
-    glm_mat4_copy(rs, transform->l_matrix);
-    // Mark as dirty
+
+    // Copy the rotation-scale part (first 3 columns, first 3 rows)
+    for (int col = 0; col < 3; col++)
+    {
+        for (int row = 0; row < 3; row++)
+        {
+            transform->l_matrix[col][row] = rs[col][row];
+        }
+    }
+
+    // Preserve translation (column 3)
+    transform->l_matrix[3][0] = transform->l_pos.x;
+    transform->l_matrix[3][1] = transform->l_pos.y;
+    transform->l_matrix[3][2] = transform->l_pos.z;
+
+    // Bottom row stays [0, 0, 0, 1]
+    transform->l_matrix[0][3] = 0.0f;
+    transform->l_matrix[1][3] = 0.0f;
+    transform->l_matrix[2][3] = 0.0f;
+    transform->l_matrix[3][3] = 1.0f;
+
     if (setDirty)
     {
         Transform_MarkDirty(transform);
@@ -158,20 +184,41 @@ inline static void Transform_SetLRot(Transform *transform, Quaternion *rotation,
 inline static void Transform_SetLSca(Transform *transform, V3 *scale, bool setDirty)
 {
     transform->l_scale = *scale;
-    // Scale
+
+    // Create scale matrix
     mat4 scl = GLM_MAT4_IDENTITY_INIT;
     scl[0][0] = scale->x;
     scl[1][1] = scale->y;
     scl[2][2] = scale->z;
-    // Rotation
+
+    // Create rotation matrix
     mat4 rot;
     Quat_to_mat4(&transform->l_rot, rot);
-    // Combine rotation * scale
+
+    // Combine: result = rotation * scale
     mat4 rs;
     glm_mat4_mul(rot, scl, rs);
-    // Apply translation
-    glm_mat4_copy(rs, transform->l_matrix);
-    // Mark as dirty
+
+    // Copy the rotation-scale part (first 3 columns, first 3 rows)
+    for (int col = 0; col < 3; col++)
+    {
+        for (int row = 0; row < 3; row++)
+        {
+            transform->l_matrix[col][row] = rs[col][row];
+        }
+    }
+
+    // Preserve translation (column 3)
+    transform->l_matrix[3][0] = transform->l_pos.x;
+    transform->l_matrix[3][1] = transform->l_pos.y;
+    transform->l_matrix[3][2] = transform->l_pos.z;
+
+    // Bottom row stays [0, 0, 0, 1]
+    transform->l_matrix[0][3] = 0.0f;
+    transform->l_matrix[1][3] = 0.0f;
+    transform->l_matrix[2][3] = 0.0f;
+    transform->l_matrix[3][3] = 1.0f;
+
     if (setDirty)
     {
         Transform_MarkDirty(transform);
@@ -180,22 +227,32 @@ inline static void Transform_SetLSca(Transform *transform, V3 *scale, bool setDi
 
 inline static void Transform_InitLocalMatrix(Transform *transform, V3 l_pos, Quaternion l_rot, V3 l_scale)
 {
+    transform->l_pos = l_pos;
     transform->l_rot = l_rot;
     transform->l_scale = l_scale;
-    // Rotation
+
+    // Create rotation matrix
     mat4 rot;
     Quat_to_mat4(&l_rot, rot);
-    // Scale
+
+    // Create scale matrix
     mat4 scale = GLM_MAT4_IDENTITY_INIT;
     scale[0][0] = l_scale.x;
     scale[1][1] = l_scale.y;
     scale[2][2] = l_scale.z;
-    // Combine rotation * scale
+
+    // Combine: result = rotation * scale
     mat4 rs;
     glm_mat4_mul(rot, scale, rs);
-    // Apply translation
+
+    // Copy to local matrix
     glm_mat4_copy(rs, transform->l_matrix);
-    Transform_SetLPos(transform, &l_pos, false);
+
+    // Set translation (column 3)
+    transform->l_matrix[3][0] = l_pos.x;
+    transform->l_matrix[3][1] = l_pos.y;
+    transform->l_matrix[3][2] = l_pos.z;
+    transform->l_matrix[3][3] = 1.0f;
 }
 
 /// @brief You must call this for every new Transform
@@ -284,22 +341,31 @@ static void Transform_CleanDownwards(Transform *transform)
         // World = Local
         glm_mat4_copy(transform->l_matrix, transform->w_matrix);
     }
+
     // ==== CACHE WORLD DATA ==== //
-    // Position
-    transform->w_pos = (V3){transform->w_matrix[3][0], transform->w_matrix[3][1], transform->w_matrix[3][2]};
-    // Scale
-    V3 scale = (V3){
-        glm_vec3_norm((vec3){transform->w_matrix[0][0], transform->w_matrix[0][1], transform->w_matrix[0][2]}),
-        glm_vec3_norm((vec3){transform->w_matrix[1][0], transform->w_matrix[1][1], transform->w_matrix[1][2]}),
-        glm_vec3_norm((vec3){transform->w_matrix[2][0], transform->w_matrix[2][1], transform->w_matrix[2][2]}),
-    };
-    transform->w_scale = scale;
-    // Rotation
-    Quat_from_mat4(&transform->w_rot, transform->w_matrix, scale);
+    // Position (from column 3)
+    transform->w_pos = (V3){
+        transform->w_matrix[3][0],
+        transform->w_matrix[3][1],
+        transform->w_matrix[3][2]};
+
+    // Scale (length of each column vector)
+    transform->w_scale = (V3){
+        sqrtf(transform->w_matrix[0][0] * transform->w_matrix[0][0] +
+              transform->w_matrix[0][1] * transform->w_matrix[0][1] +
+              transform->w_matrix[0][2] * transform->w_matrix[0][2]),
+        sqrtf(transform->w_matrix[1][0] * transform->w_matrix[1][0] +
+              transform->w_matrix[1][1] * transform->w_matrix[1][1] +
+              transform->w_matrix[1][2] * transform->w_matrix[1][2]),
+        sqrtf(transform->w_matrix[2][0] * transform->w_matrix[2][0] +
+              transform->w_matrix[2][1] * transform->w_matrix[2][1] +
+              transform->w_matrix[2][2] * transform->w_matrix[2][2])};
+
+    // Rotation (extract from matrix, removing scale)
+    Quat_from_mat4(&transform->w_rot, transform->w_matrix, transform->w_scale);
+
     // ==== CHILDREN ==== //
-    // Reset flag
     transform->isDirty = false;
-    // Clean up children
     for (int i = 0; i < transform->children_size; i++)
     {
         Transform_CleanDownwards(transform->children[i]);
@@ -345,7 +411,8 @@ void T_Print_LMatrix(Transform *transform)
 // Getters
 // -------------------------
 
-void T_WMatrix(Transform *transform, mat4 dest){
+void T_WMatrix(Transform *transform, mat4 dest)
+{
     if (transform->isDirty)
     {
         Transform_CleanFromTop(transform);
@@ -353,7 +420,8 @@ void T_WMatrix(Transform *transform, mat4 dest){
     glm_mat4_copy(transform->w_matrix, dest);
 }
 
-void T_LMatrix(Transform *transform, mat4 dest){
+void T_LMatrix(Transform *transform, mat4 dest)
+{
     glm_mat4_copy(transform->l_matrix, dest);
 }
 
@@ -414,47 +482,183 @@ V3 T_LSca(Transform *transform)
 {
     return transform->l_scale;
 }
-V3 T_Forward(Transform *transform)
-{
-    if (transform->isDirty)
-    {
-        Transform_CleanFromTop(transform);
-    }
-    V3 forward = {
-        transform->w_matrix[2][0] / transform->w_scale.z,
-        transform->w_matrix[2][1] / transform->w_scale.z,
-        transform->w_matrix[2][2] / transform->w_scale.z};
-    return forward;
-}
 V3 T_Right(Transform *transform)
 {
     if (transform->isDirty)
     {
         Transform_CleanFromTop(transform);
     }
+    // Right is the first column (X-axis), normalized by scale
     V3 right = {
-        -transform->w_matrix[0][0] / transform->w_scale.x,
-        -transform->w_matrix[0][1] / transform->w_scale.x,
-        -transform->w_matrix[0][2] / transform->w_scale.x};
+        transform->w_matrix[0][0] / transform->w_scale.x,
+        transform->w_matrix[0][1] / transform->w_scale.x,
+        transform->w_matrix[0][2] / transform->w_scale.x};
     return right;
 }
+
 V3 T_Up(Transform *transform)
 {
     if (transform->isDirty)
     {
         Transform_CleanFromTop(transform);
     }
+    // Up is the second column (Y-axis), normalized by scale
     V3 up = {
-        -transform->w_matrix[1][0] / transform->w_scale.y,
-        -transform->w_matrix[1][1] / transform->w_scale.y,
-        -transform->w_matrix[1][2] / transform->w_scale.y};
+        transform->w_matrix[1][0] / transform->w_scale.y,
+        transform->w_matrix[1][1] / transform->w_scale.y,
+        transform->w_matrix[1][2] / transform->w_scale.y};
     return up;
+}
+
+V3 T_Forward(Transform *transform)
+{
+    if (transform->isDirty)
+    {
+        Transform_CleanFromTop(transform);
+    }
+    // Forward is the third column (Z-axis), normalized by scale
+    // Note: In OpenGL, forward is typically -Z, but this depends on your convention
+    V3 forward = {
+        transform->w_matrix[2][0] / transform->w_scale.z,
+        transform->w_matrix[2][1] / transform->w_scale.z,
+        transform->w_matrix[2][2] / transform->w_scale.z};
+    return forward;
+}
+
+void T_Debug_Validate(Transform *transform)
+{
+    if (transform->isDirty)
+    {
+        Transform_CleanFromTop(transform);
+    }
+
+    Log(&_logConfig, "=== Transform Debug: %s ===", transform->entity->name);
+
+    // Check if local matrix matches TRS
+    mat4 test;
+    Transform_InitLocalMatrix(transform, transform->l_pos, transform->l_rot, transform->l_scale);
+
+    Log(&_logConfig, "Local Position: (%.2f, %.2f, %.2f)",
+        transform->l_pos.x, transform->l_pos.y, transform->l_pos.z);
+    Log(&_logConfig, "World Position: (%.2f, %.2f, %.2f)",
+        transform->w_pos.x, transform->w_pos.y, transform->w_pos.z);
+
+    Log(&_logConfig, "Local Matrix Translation: (%.2f, %.2f, %.2f)",
+        transform->l_matrix[3][0], transform->l_matrix[3][1], transform->l_matrix[3][2]);
+
+    // Verify orthogonality of rotation matrix
+    V3 right = T_Right(transform);
+    V3 up = T_Up(transform);
+    V3 forward = T_Forward(transform);
+
+    float dot_ru = right.x * up.x + right.y * up.y + right.z * up.z;
+    float dot_rf = right.x * forward.x + right.y * forward.y + right.z * forward.z;
+    float dot_uf = up.x * forward.x + up.y * forward.y + up.z * forward.z;
+
+    Log(&_logConfig, "Axis orthogonality (should be ~0): R·U=%.4f, R·F=%.4f, U·F=%.4f",
+        dot_ru, dot_rf, dot_uf);
+
+    float len_r = sqrtf(right.x * right.x + right.y * right.y + right.z * right.z);
+    float len_u = sqrtf(up.x * up.x + up.y * up.y + up.z * up.z);
+    float len_f = sqrtf(forward.x * forward.x + forward.y * forward.y + forward.z * forward.z);
+
+    Log(&_logConfig, "Axis lengths (should be ~1): R=%.4f, U=%.4f, F=%.4f",
+        len_r, len_u, len_f);
 }
 
 // -------------------------
 // Setters
 // -------------------------
+// -------------------------
+// World Setters
+// -------------------------
+/// @brief Sets the world position of the transform
+void T_WPos_Set(Transform *transform, V3 w_pos)
+{
+    // Only clean parent if it's dirty - avoid unnecessary work
+    if (transform->parent->isDirty)
+    {
+        Transform_CleanFromTop(transform->parent);
+    }
 
+    // Get parent's inverse world matrix (parent is now guaranteed clean)
+    mat4 parent_inv;
+    glm_mat4_inv(transform->parent->w_matrix, parent_inv);
+
+    // Transform world position to parent space
+    vec4 w_pos_homogeneous = {w_pos.x, w_pos.y, w_pos.z, 1.0f};
+    vec4 l_pos_homogeneous;
+    glm_mat4_mulv(parent_inv, w_pos_homogeneous, l_pos_homogeneous);
+
+    V3 l_pos = {l_pos_homogeneous[0], l_pos_homogeneous[1], l_pos_homogeneous[2]};
+
+    // Mark dirty before setting to avoid redundant marking
+    Transform_MarkDirty(transform);
+    Transform_SetLPos(transform, &l_pos, false); // Pass false - already marked dirty
+}
+/// @brief Sets the world rotation of the transform
+void T_WRot_Set(Transform *transform, Quaternion w_rot)
+{
+    // Only clean parent if it's dirty - avoid unnecessary work
+    if (transform->parent->isDirty)
+    {
+        Transform_CleanFromTop(transform->parent);
+    }
+
+    // Get parent's world rotation and compute its inverse (parent is now clean)
+    Quaternion parent_w_rot_inv = Quat_Inverse(transform->parent->w_rot);
+
+    // Local rotation = parent_inv * world_rot
+    Quaternion l_rot = Quat_Mul(parent_w_rot_inv, w_rot);
+
+    // Mark dirty before setting to avoid redundant marking
+    Transform_MarkDirty(transform);
+    Transform_SetLRot(transform, &l_rot, false); // Pass false - already marked dirty
+}
+/// @brief Sets the world scale of the transform
+void T_WSca_Set(Transform *transform, V3 w_scale)
+{
+    // Only clean parent if it's dirty - avoid unnecessary work
+    if (transform->parent->isDirty)
+    {
+        Transform_CleanFromTop(transform->parent);
+    }
+
+    // Local scale = world scale / parent world scale (parent is now clean)
+    V3 parent_scale = transform->parent->w_scale;
+    V3 l_scale = {
+        (parent_scale.x != 0.0f) ? w_scale.x / parent_scale.x : w_scale.x,
+        (parent_scale.y != 0.0f) ? w_scale.y / parent_scale.y : w_scale.y,
+        (parent_scale.z != 0.0f) ? w_scale.z / parent_scale.z : w_scale.z};
+
+    // Mark dirty before setting to avoid redundant marking
+    Transform_MarkDirty(transform);
+    Transform_SetLSca(transform, &l_scale, false); // Pass false - already marked dirty
+}
+/// @brief Adds to world position (convenience function)
+inline void T_WPos_Add(Transform *transform, V3 addition)
+{
+    V3 current = T_WPos(transform);
+    V3 newPos = V3_ADD(current, addition);
+    T_WPos_Set(transform, newPos);
+}
+
+/// @brief Adds rotation in world space
+inline void T_WRot_Add(Transform *transform, V3 euler)
+{
+    Quaternion current = T_WRot(transform);
+    Quaternion delta = Quat_FromEuler(euler);
+    Quaternion newRot = Quat_Mul(delta, current);
+    T_WRot_Set(transform, newRot);
+}
+
+/// @brief Multiplies world rotation by a quaternion
+inline void T_WRot_Mul(Transform *transform, Quaternion q)
+{
+    Quaternion current = T_WRot(transform);
+    Quaternion newRot = Quat_Mul(q, current);
+    T_WRot_Set(transform, newRot);
+}
 inline void T_LPos_Set(Transform *transform, V3 l_pos)
 {
     Transform_SetLPos(transform, &l_pos, true);
@@ -470,27 +674,32 @@ inline void T_LSca_Set(Transform *transform, V3 l_scale)
 inline void T_LRot_Add(Transform *transform, V3 euler)
 {
     Quaternion q = Quat_FromEuler(euler);
-    T_LRot_Mul(transform, q);
+    q = Quat_Mul(transform->l_rot, q);
+    Transform_SetLRot(transform, &q, true);
 }
 inline void T_LRot_Mul(Transform *transform, Quaternion q)
 {
-    Quaternion newRot = Quat_Mul(transform->l_rot, q);
-    Transform_SetLRot(transform, &newRot, true);
+    Quaternion l_rot = T_LRot(transform);
+    l_rot = Quat_Mul(l_rot, q);
+    Transform_SetLRot(transform, &l_rot, true);
 }
 inline void T_LSca_Mul(Transform *transform, V3 scale)
 {
-    V3 newScale = V3_MUL(transform->l_scale, scale);
-    Transform_SetLSca(transform, &newScale, true);
+    V3 localScale = T_LSca(transform);
+    localScale = V3_MUL(localScale, scale);
+    Transform_SetLSca(transform, &localScale, true);
 }
 inline void T_LPos_Add(Transform *transform, V3 addition)
 {
-    V3 newPos = V3_ADD(transform->l_pos, addition);
-    Transform_SetLPos(transform, &newPos, true);
+    V3 localPos = T_LPos(transform);
+    localPos = V3_ADD(localPos, addition);
+    Transform_SetLPos(transform, &localPos, true);
 }
 inline void T_LPos_Sub(Transform *transform, V3 subtraction)
 {
-    V3 newPos = V3_SUB(transform->l_pos, subtraction);
-    Transform_SetLPos(transform, &newPos, true);
+    V3 localPos = T_LPos(transform);
+    localPos = V3_SUB(localPos, subtraction);
+    Transform_SetLPos(transform, &localPos, true);
 }
 
 // -------------------------
@@ -573,6 +782,19 @@ inline Quaternion Quat_Mul(Quaternion a, Quaternion b)
     return result;
 }
 
+inline V3 Quat_RotateV3(Quaternion q, V3 v)
+{
+    // Rotate vector v by quaternion q
+    // Formula: v' = v + 2 * cross(q.xyz, cross(q.xyz, v) + q.w * v)
+    // This is an optimized version of: v' = q * v * q^-1
+
+    V3 qvec = {q.x, q.y, q.z};
+    V3 cross1 = V3_CROSS(qvec, v);
+    V3 temp = V3_ADD(cross1, V3_SCALE(v, q.w));
+    V3 cross2 = V3_CROSS(qvec, temp);
+    return V3_ADD(v, V3_SCALE(cross2, 2.0f));
+}
+
 inline Quaternion Quat_Div(Quaternion a, Quaternion b)
 {
     float norm_b = b.w * b.w + b.x * b.x + b.y * b.y + b.z * b.z;
@@ -583,4 +805,38 @@ inline Quaternion Quat_Div(Quaternion a, Quaternion b)
         (a.w * conj_b.y - a.x * conj_b.z + a.y * conj_b.w + a.z * conj_b.x) / norm_b,
         (a.w * conj_b.z + a.x * conj_b.y - a.y * conj_b.x + a.z * conj_b.w) / norm_b};
     return result;
+}
+
+inline Quaternion Quat_Norm(Quaternion q)
+{
+    float length = sqrtf(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z);
+    if (length < 0.0001f)
+    {
+        // Return identity quaternion if too small
+        return (Quaternion){1.0f, 0.0f, 0.0f, 0.0f};
+    }
+    float invLength = 1.0f / length;
+    return (Quaternion){
+        q.w * invLength,
+        q.x * invLength,
+        q.y * invLength,
+        q.z * invLength};
+}
+
+/// @brief Creates a quaternion from axis and angle (angle in degrees)
+inline Quaternion Quat_FromAxisAngle(V3 axis, float angle)
+{
+    // Normalize the axis
+    V3 normalizedAxis = V3_NORM(axis);
+
+    // Convert angle to radians and get half angle
+    float halfAngle = Radians(angle) * 0.5f;
+    float s = sin(halfAngle);
+    float c = cos(halfAngle);
+
+    return (Quaternion){
+        .w = c,
+        .x = normalizedAxis.x * s,
+        .y = normalizedAxis.y * s,
+        .z = normalizedAxis.z * s};
 }

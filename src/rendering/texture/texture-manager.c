@@ -22,6 +22,8 @@ TextureManager *TextureManager_Create()
     {
         manager->textures[i] = NULL;
     }
+
+    TextureManager_Select(manager);
     return manager;
 }
 

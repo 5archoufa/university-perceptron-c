@@ -5,7 +5,7 @@ BUILD_DIR = build
 TARGET = $(BUILD_DIR)/perceptron
 
 # === Common Flags ===
-CFLAGS = -Wall -O2 -Iinclude -g
+CFLAGS = -Wall -O2 -Iinclude -g -DDEBUG_COLLIDERS
 LDFLAGS = -lcglm -lm
 
 # === Platform-specific ===

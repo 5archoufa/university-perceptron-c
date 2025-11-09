@@ -29,7 +29,7 @@ void LS_Point_SetColor(LS_Point *ls_point, uint32_t color)
 
 EC_Light *Prefab_PointLight(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, float intensity, float range, uint32_t color)
 {
-    Entity *e_pointLight = Entity_Create(parent, "Point Light", TS, position, rotation, scale);
+    Entity *e_pointLight = Entity_Create(parent, false, "Point Light", TS, position, rotation, scale);
     LS_Point *ls_pointLight = LS_PointLight_Create(intensity, range, color);
     EC_Light *ec_light = EC_Light_Create(e_pointLight, LS_T_POINT, ls_pointLight, LS_PointLight_Free);
     return ec_light;

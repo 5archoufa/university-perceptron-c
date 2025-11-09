@@ -20,6 +20,6 @@ typedef struct EC_Human
 // Creation & Freeing 
 // -------------------------
 
-EC_Human *EC_Human_Create(Entity *entity);
+EC_Human *EC_Human_Create(EC_Island *ec_island, Entity *e_human);
 
 #endif

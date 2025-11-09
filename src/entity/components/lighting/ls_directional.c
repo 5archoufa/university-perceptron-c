@@ -9,12 +9,16 @@ static void LS_Directional_Free(EC_Light *light)
     free(ls_directional);
 }
 
-static LS_Directional *LS_Directional_Create(float intensity, uint32_t color)
+static EC_Light *LS_Directional_Create(Entity *entity, float intensity, uint32_t color)
 {
     LS_Directional *ls_directional = malloc(sizeof(LS_Directional));
+    // Properties
     ls_directional->intensity = intensity;
     LS_Directional_SetColor(ls_directional, color);
-    return ls_directional;
+    // EC_Light
+    EC_Light *ec_light = EC_Light_Create(entity, LS_T_DIRECTIONAL, ls_directional, LS_Directional_Free);
+    ls_directional->ec_light = ec_light;
+    return ec_light;
 }
 
 void LS_Directional_SetColor(LS_Directional *ls_directional, uint32_t color)
@@ -29,8 +33,7 @@ void LS_Directional_SetColor(LS_Directional *ls_directional, uint32_t color)
 
 EC_Light *Prefab_DirectionalLight(Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale, float intensity, uint32_t color)
 {
-    Entity *e_directional = Entity_Create(parent, "Directional Light", TS, position, rotation, scale);
-    LS_Directional *ls_directional = LS_Directional_Create(intensity, color);
-    EC_Light *ec_light = EC_Light_Create(e_directional, LS_T_DIRECTIONAL, ls_directional, LS_Directional_Free);
+    Entity *e_directional = Entity_Create(parent, false, "Directional Light", TS, position, rotation, scale);
+    EC_Light *ec_light = LS_Directional_Create(e_directional, intensity, color);
     return ec_light;
 }

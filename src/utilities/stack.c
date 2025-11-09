@@ -15,7 +15,7 @@ void *Peek(Stack *stack)
     return stack->content[stack->count - 1];
 }
 
-void *Pop(Stack *stack)
+void *Pop(Stack *stack, void *item)
 {
     if (stack->count == 0)
     {
@@ -23,22 +23,43 @@ void *Pop(Stack *stack)
         return NULL;
     }
 
-    void *output = stack->content[stack->count - 1];
-    stack->count--;
-    if (stack->count == 0)
+    if (item == NULL && stack->count > 0)
     {
-        free(stack->content);
-        stack->content = NULL;
+        item = stack->content[stack->count - 1];
     }
-    else
+
+    for (int i = stack->count - 1; i >= 0; i--)
     {
-        stack->content = realloc(stack->content, stack->count * sizeof(void *));
+        if (stack->content[i] == item)
+        {
+            // Shift remaining items down
+            for (int j = i; j < stack->count; j++)
+            {
+                stack->content[j] = stack->content[j + 1];
+            }
+            stack->count--;
+            if (stack->count == 0)
+            {
+                free(stack->content);
+                stack->content = NULL;
+            }
+            else
+            {
+                stack->content = realloc(stack->content, stack->count * sizeof(void *));
+            }
+            return item;
+        }
     }
-    return output;
+    return NULL;
 }
 
 void Push(Stack *stack, void *item)
 {
+    for(int i = 0;i< stack->count;i++) {
+        if(stack->content[i] == item) {
+            return;
+        }
+    }
     stack->count++;
     stack->content = realloc(stack->content, stack->count * sizeof(void *));
     stack->content[stack->count - 1] = item;

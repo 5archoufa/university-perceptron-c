@@ -28,7 +28,7 @@ layout(std140, binding = 0) uniform ShaderGlobalData {
     vec4 camera_position;
 
     float time;
-    float _pad_world_0;
+    float timeOfDay;
     float _pad_world_1;
     float _pad_world_2;
 

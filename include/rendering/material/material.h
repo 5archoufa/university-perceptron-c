@@ -22,6 +22,7 @@ typedef struct Material Material;
 
 struct Material
 {
+    uint32_t id;
     Shader *shader;
     size_t instanceProps_size;
     /// @brief Array of instance properties for this material ordered by their index in the shader's properties

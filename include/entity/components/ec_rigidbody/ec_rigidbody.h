@@ -44,6 +44,9 @@ typedef struct EC_RigidBody
     V3 torqueAccum;
     float linearDamping;
     float angularDamping;
+    // Sleeping system
+    bool isSleeping;
+    float sleepTimer;
     // Constraints
     RigidBodyConstraints constraints;
 } EC_RigidBody;

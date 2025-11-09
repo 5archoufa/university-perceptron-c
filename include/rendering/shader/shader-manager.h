@@ -13,6 +13,13 @@
 #define SHADER_SCREEN_BLIT "Screen-Blit"
 #define SHADER_TOON_SOLID "Toon Solid"
 #define SHADER_SEA "Sea"
+#define SHADER_UI_TEXT "UI-Text"
+#define SHADER_DEBUG_COLLIDER "Debug-Collider"
+#define SHADER_ISLAND "Island"
+#define SHADER_SKYBOX "Skybox"
+#define SHADER_QUAD_BLIT "Quad-Blit"
+#define SHADER_TRIGLE_PAGE "Trigle-Page"
+#define SHADER_SPRITE "Sprite"
 
 // -------------------------
 // Types
@@ -25,9 +32,10 @@ typedef struct ShaderGlobalData{
     vec4 camera_position; // 16 bytes
     // ==== World ==== //
     float time; // 4 bytes
+    /// @brief Time of day in [0, 24)
+    float timeOfDay; // 4 bytes
     float _pad_world_1; // 4 bytes
     float _pad_world_2; // 4 bytes
-    float _pad_world_3; // 4 bytes
     // ==== Lighting ==== //
     // Directional Lights
     int light_directional_count; // 4 bytes

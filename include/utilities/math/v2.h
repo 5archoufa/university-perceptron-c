@@ -18,7 +18,7 @@ struct V2_INT{
 
 V2 V2_SCALE(V2* a, float b);
 V2 V2_MUL(V2 *a, V2 *b);
-V2 V2_SUB(V2 *a, V2 *b);
+V2 V2_SUB(V2 a, V2 b);
 V2 V2_DIV(V2 *a, V2 *b);
 V2 V2_SIZE(V2 *a, V2 *b);
 V2 V2_CENTER(V2 *a, V2 *b);

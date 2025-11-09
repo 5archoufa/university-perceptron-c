@@ -1,7 +1,9 @@
 #ifndef MATERIAL_MANAGER_H
 #define MATERIAL_MANAGER_H
 
+// C
 #include <stddef.h>
+#include <stdint.h>
 
 // -------------------------
 // Types
@@ -13,6 +15,7 @@ typedef struct MaterialManager MaterialManager;
 struct MaterialManager{
     size_t materials_size;
     Material **materials;
+    uint32_t nextMaterialId;
 };
 
 // -------------------------

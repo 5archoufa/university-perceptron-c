@@ -15,9 +15,22 @@
 
 static LogConfig _logConfig = {"Entity", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
 static uint32_t _nextEntityId = 0;
-static size_t _e_layers_size = ELAYERS_SIZE;
-static ELayer _elayers[ELAYERS_SIZE] = ELAYERS;
-static ELayer *_e_layerDefault = NULL;
+
+// -------------------------
+// Layers
+// -------------------------
+
+void Entity_SetLayer(Entity *entity, uint8_t layer, bool updateChildren)
+{
+    entity->layer = layer;
+    if (updateChildren)
+    {
+        for (int i = 0; i < entity->transform.children_size; i++)
+        {
+            Entity_SetLayer(entity->transform.children[i]->entity, layer, true);
+        }
+    }
+}
 
 // -------------------------
 // Entity Events
@@ -114,23 +127,6 @@ void Entity_FixedUpdate(Entity *entity)
 }
 
 // -------------------------
-// Layers
-// -------------------------
-
-void Entity_FreeCache()
-{
-}
-
-// -------------------------
-// Initialization
-// -------------------------
-
-void Entity_InitSystem()
-{
-    _e_layerDefault = &_elayers[0];
-}
-
-// -------------------------
 // Creation
 // -------------------------
 
@@ -158,23 +154,26 @@ Component *Component_Create(void *self,
     return component;
 }
 
-Entity *Entity_Create(Entity *parent, char *name, TransformSpace TS, V3 position, Quaternion rotation, V3 scale)
+Entity *Entity_Create(Entity *parent, bool isStatic, char *name, TransformSpace TS, V3 position, Quaternion rotation, V3 scale)
 {
-    LogCreate(&_logConfig, name);
     Entity *entity = malloc(sizeof(Entity));
     // Id
     entity->id = _nextEntityId++;
     // Name
     entity->name = name;
-    entity->isStatic = false;
+    entity->isStatic = isStatic;
     // Layer
-    entity->e_layer = _e_layerDefault;
+    entity->layer = parent->layer;
+    // Tag
+    entity->tag = E_TAG_NONE;
     // Components
     entity->componentCount = 0;
     entity->component_keys = NULL;
     entity->component_values = NULL;
     // Transform
     Transform_Init(&entity->transform, entity, &parent->transform, TS, position, rotation, scale);
+    // Log
+    LogCreate(&_logConfig, "%s, Layer %d", name, entity->layer);
     return entity;
 }
 
@@ -183,7 +182,7 @@ Entity *Entity_Create_WorldParent(World *world, V3 position, Quaternion rotation
     LogCreate(&_logConfig, "World<%s>'s Parent Entity", world->name);
     Entity *entity = malloc(sizeof(Entity));
     entity->name = world->name;
-    entity->isStatic = false;
+    entity->isStatic = true;
     // Components
     entity->componentCount = 0;
     entity->component_keys = NULL;
@@ -295,14 +294,57 @@ void Entity_AddComponent(Entity *entity, Component *component)
     entity->component_values[entity->componentCount - 1] = component;
 }
 
-void Component_SetActive(Component *component, bool isActive)
+// -------------------------
+// Active Status
+// -------------------------
+
+static void Entity_UpdateActiveState(Entity *entity)
 {
-    if (component->isActive == isActive)
+    Entity *parent = entity->transform.parent ? entity->transform.parent->entity : NULL;
+    if (parent)
+    {
+        entity->isActive = parent->isActive && entity->isActiveSelf;
+    }
+    else
+    {
+        entity->isActive = entity->isActiveSelf;
+    }
+    // Update components
+    for (int i = 0; i < entity->componentCount; i++)
+    {
+        entity->component_values[i]->isActive = entity->isActive && entity->component_values[i]->isActiveSelf;
+    }
+    // Update children
+    for (int i = 0; i < entity->transform.children_size; i++)
+    {
+        Entity_UpdateActiveState(entity->transform.children[i]->entity);
+    }
+}
+
+void Entity_SetActiveSelf(Entity *entity, bool isActiveSelf)
+{
+    if (entity->isActiveSelf == isActiveSelf)
     {
         return;
     }
-    component->isActive = isActive;
-    component->SetActive(component, isActive);
+    entity->isActiveSelf = isActiveSelf;
+    Entity_UpdateActiveState(entity);
+}
+
+void Component_SetActiveSelf(Component *component, bool isActiveSelf)
+{
+    if (component->isActiveSelf == isActiveSelf)
+    {
+        return;
+    }
+    component->isActiveSelf = isActiveSelf;
+    bool isEntityActive = component->entity->isActive;
+    bool newActiveState = isEntityActive && isActiveSelf;
+    if (component->isActive != newActiveState)
+    {
+        component->isActive = newActiveState;
+        component->SetActive(component, newActiveState);
+    }
 }
 
 // -------------------------

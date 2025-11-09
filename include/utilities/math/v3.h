@@ -42,8 +42,10 @@ V3 V3_NORM(const V3 a);
 V3 V3_CENTER(const V3 a, const V3 b);
 V3 V3_Up(float y);
 V3 V3_Right(float x);
+float V3_MAGNITUDE(const V3 a);
 V3 V3_Forward(float z);
 V3 V3_MAX(V3 a, V3 b);
 V3 V3_MIN(V3 a, V3 b);
 V3 V3_ABS(const V3 a);
+bool V3_EQUALS(const V3 a, const V3 b);
 #endif

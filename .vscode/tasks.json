@@ -4,7 +4,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "mingw32-make",
+            "command": "mingw32-make -f Makefile",
             "args": [],
             "group": {
                 "kind": "build",

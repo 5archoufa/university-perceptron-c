@@ -74,6 +74,11 @@ inline V3 V3_MAX(V3 a, V3 b)
         .z = (a.z > b.z) ? a.z : b.z};
 }
 
+inline float V3_MAGNITUDE(const V3 a)
+{
+    return sqrtf(a.x * a.x + a.y * a.y + a.z * a.z);
+}
+
 inline V3 V3_NORM(const V3 a)
 {
     V3 result = a;
@@ -86,6 +91,12 @@ inline V3 V3_NORM(const V3 a)
     }
     return result;
 }
+
+inline bool V3_EQUALS(const V3 a, const V3 b)
+{
+    return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
+}
+
 inline V3 V3_SIZE(const V3 a, const V3 b)
 {
     float width = b.x - a.x;

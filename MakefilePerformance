@@ -1,0 +1,62 @@
+# === Compiler & Directories ===
+CC = gcc
+SRC_DIR = src
+BUILD_DIR = build
+TARGET = $(BUILD_DIR)/perceptron
+
+# === Build Flags (optimized for speed) ===
+CFLAGS = -O3 -march=native -flto -fomit-frame-pointer -Iinclude
+LDFLAGS = -lcglm -lm -flto
+
+# === Platform-specific ===
+ifeq ($(OS),Windows_NT)
+    TARGET := $(TARGET).exe
+    LDFLAGS += -lwinmm -lgdi32 -lopengl32 -luser32 -Wl,-subsystem,console -lglfw3
+    MKDIR = if not exist "$(subst /,\\,$(1))" mkdir "$(subst /,\\,$(1))"
+    RM = del /Q
+    SEP = \\
+else
+    LDFLAGS += -ldl -lpthread -lglfw
+    MKDIR = mkdir -p $(1)
+    RM = rm -f
+    SEP = /
+endif
+
+# === Helper: recursive wildcard ===
+rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
+# === Files ===
+SRCS := $(call rwildcard,$(SRC_DIR)/,*.c)
+OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
+DEPS := $(OBJS:.o=.d)
+
+# === Default target ===
+all: $(TARGET)
+
+# === Build binary ===
+$(TARGET): $(OBJS)
+	@$(call MKDIR,$(BUILD_DIR))
+	@echo Linking $@
+	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+# === Build object files ===
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@$(call MKDIR,$(dir $@))
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+
+# === Dependency includes ===
+-include $(DEPS)
+
+# === Phony targets ===
+.PHONY: all clean run rebuild
+
+clean:
+	@echo Cleaning build...
+	-@$(RM) $(TARGET) $(OBJS) $(DEPS)
+
+rebuild: clean all
+
+run: $(TARGET)
+	@echo Running...
+	@$(TARGET)

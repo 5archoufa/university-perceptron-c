@@ -4,6 +4,8 @@
 // Entity
 #include "entity/entity.h"
 #include "entity/transform.h"
+// Island
+#include "entity/components/island/island.h"
 
 // -------------------------
 // Types
@@ -11,7 +13,8 @@
 
 typedef struct EC_Creature EC_Creature;
 
-typedef enum {
+typedef enum
+{
     CREATURE_T_HUMAN,
     CREATURE_T_SHEEP,
     CREATURE_T_TRIGONOID
@@ -26,6 +29,8 @@ typedef struct CreatureController
     // Input
     V2 input_move;
     V2 input_look;
+    // Grounding
+    RaycastHit groundHit;
 } CreatureController;
 
 struct EC_Creature
@@ -35,13 +40,16 @@ struct EC_Creature
     CreatureController controller;
     // References
     Transform *transform;
-    EC_Renderer3D *ec_renderer3d;
-} ;
+    EC_MeshRenderer *ec_meshRenderer;
+    EC_Island *ec_island;
+    // Caching
+    V3 previousPos;
+};
 
-// ------------------------- 
-// Creation & Freeing 
+// -------------------------
+// Creation & Freeing
 // -------------------------
 
-EC_Creature *EC_Creature_Create(Entity *entity, CreatureType type, EC_Renderer3D *ec_renderer3d, V2 movementSpeed, V2 lookSpeed);
+EC_Creature *EC_Creature_Create(EC_Island *ec_island, Entity *entity, CreatureType type, EC_MeshRenderer *ec_meshRenderer, V2 movementSpeed, V2 lookSpeed);
 
 #endif

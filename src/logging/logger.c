@@ -4,13 +4,13 @@
 
 const char *COLOR_RESET = "]:: \x1b[0m";
 const char* LINE_BREAK = "\n";
-const char* MSG_FREE_START = "[ 🗑️  ] ";
+const char* MSG_FREE_START = "[🗑️] ";
 const char* MSG_FREE_MID = "Free(";
 const char* MSG_FREE_END = ")\n";
-const char* MSG_INIT_START = "[ 🏁  ] ";
+const char* MSG_INIT_START = "[🏁] ";
 const char* MSG_INIT_MID = "Init(";
 const char* MSG_INIT_END = ")\n";
-const char* MSG_CREATE_START = "[ 👶🏻  ] ";
+const char* MSG_CREATE_START = "[👶] ";
 const char* MSG_CREATE_MID = "Create(";
 const char* MSG_CREATE_END = ")\n";
 
@@ -24,6 +24,10 @@ static const char *GetColorChar(LogColor c)
         return "\x1b[32m[";
     case LOG_COLOR_BLUE:
         return "\x1b[34m[";
+    case LOG_COLOR_ORANGE:
+        return "\x1b[33m[";
+    case LOG_COLOR_GRAY:
+        return "\x1b[90m[";
     case LOG_COLOR_DEFAULT:
     default:
         return "\x1b[37m[";

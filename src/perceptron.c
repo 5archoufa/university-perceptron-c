@@ -26,6 +26,8 @@
 // Shader
 #include "rendering/shader/shader-manager.h"
 #include "rendering/shader/shader.h"
+// Text
+#include "ui/text_font_manager.h"
 // OpenGL
 #define GLFW_INCLUDE_NONE
 #include <glad/glad.h>
@@ -49,7 +51,7 @@ float PerceptronTime = 0.0f;
 GLuint ShaderProgram;
 // Window configuration - imageWidth/Height is the low-res render target, windowWidth/Height is the actual window size
 const float m = 0.4f;
-MyWindowConfig WindowConfig = {(int)(1280 * m), (int)(720 * m), 1280, 720};
+MyWindowConfig WindowConfig = {(int)(1280 * m), (int)(720 * m), 1600, 900};
 
 static LogConfig _logConfig = {
     "Perceptron", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
@@ -115,41 +117,51 @@ int main()
     glViewport(0, 0, actualWidth, actualHeight);
     LogSuccess(&_logConfig, "Framebuffer size: %dx%d\n", actualWidth, actualHeight);
 
+    // Set the window at the top-left corner of the primary monitor
+    GLFWmonitor *primary = glfwGetPrimaryMonitor();
+    if (primary)
+    {
+        const GLFWvidmode *mode = glfwGetVideoMode(primary);
+        if (mode)
+        {
+            int x = 0; // left of screen
+            int y = 0; // top of screen
+            glfwSetWindowPos(window, x, y);
+        }
+    }
+
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE); // Optional but common
     glCullFace(GL_BACK);    // Cull back-facing triangles
     glFrontFace(GL_CCW);    // Counter-clockwise = front
+    // Hide and lock cursor to window
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // ============ Input ============ //
-    InputManager_Init(window);
+    InputManager *inputManager = InputManager_Create(window, "Perceptron Input Manager");
 
     // ============ Shaders ============ //
     ShaderManager *shaderManager = ShaderManager_Create();
-    ShaderManager_Select(shaderManager);
 
     // ============ Materials ============ //
     MaterialManager *materialManager = MaterialManager_Create();
-    MaterialManager_Select(materialManager);
 
     // ============ Meshes ============ //
     MeshManager *meshManager = MeshManager_Create();
-    MeshManager_Select(meshManager);
 
     // ============ Textures ============ //
     TextureManager *textureManager = TextureManager_Create();
-    TextureManager_Select(textureManager);
 
     // ============ 3D Renderers ============ //
     Shader *toonShader = ShaderManager_Get(SHADER_TOON_SOLID);
     Material *renderer3D_defaultMaterial = Material_Create(toonShader, 0, NULL);
-    EC_Renderer3D_SetDefaultMaterial(renderer3D_defaultMaterial);
+    EC_MeshRenderer_SetDefaultMaterial(renderer3D_defaultMaterial);
 
-    // ============ Entities ============ //
-    Entity_InitSystem();
-
-    // ============ Physics ============ //
-    PhysicsManager *physicsManager = PhysicsManager_Create();
+    // ============ UI ============ //
+    // Text
+    TextFontManager *textFontManager = TextFontManager_Create(64, (V2){512, 512});
+    TextFont_Create("JetBrainsMono-Bold", "assets/fonts/JetBrainsMono-Bold.ttf");
 
     // ============ Start Infinite Loop ============ //
     Game_Awake();
@@ -196,7 +208,7 @@ int main()
             // Calculate Framerate
             if (frameTimer >= 1.0)
             {
-                printf("FPS: %d\n", frameCounter);
+                // printf("FPS: %d\n", frameCounter);
                 frameCounter = 0;
                 frameTimer -= 1.0;
             }
@@ -229,13 +241,9 @@ int main()
     // Free
     // -------------------------
     // Input
-    InputManager_Free();
+    InputManager_Free(inputManager);
     // Game
     Game_Free();
-    // Physics
-    PhysicsManager_Free(physicsManager);
-    // Entities
-    Entity_FreeCache();
     // Meshes
     MeshManager_Free(meshManager);
     // Shaders
@@ -244,8 +252,8 @@ int main()
     MaterialManager_Free(materialManager);
     // Textures
     TextureManager_Free(textureManager);
-    // Game
-    // MyWindow_Free(myWindow);
+    // UI
+    TextFontManager_Free(textFontManager);
     // Cleanup GLFW
     glDeleteProgram(ShaderProgram);
     glfwDestroyWindow(window);

@@ -1,6 +1,5 @@
 #include "entity/components/neural_network/ec_nn_link.h"
 #include "entity/entity.h"
-#include "entity/components/renderer/renderer.h"
 #include <stdint.h>
 
 static const float EC_NN_LINK_LINE_WIDTH = 5.0;
@@ -24,11 +23,7 @@ static EC_NN_Link* EC_NN_Link_Create(Entity* entity, EC_NN_Neuron* from, EC_NN_N
 
 EC_NN_Link* Prefab_NN_Link(Entity* parent, EC_NN_Neuron* from, EC_NN_Neuron* to, float weight){
     // Entity
-    Entity* E_NN_link = Entity_Create(parent, "NN_Link", TS_WORLD, V3_ZERO, QUATERNION_IDENTITY, V3_ONE);
-    // Color
-    uint32_t pixelColor = PIXEL_WHITE;
-    pixelColor = Color_SetAlpha(pixelColor, weight * 0.5);
-    EC_Renderer* renderer_line = RD_Line_CreateWithRenderer(E_NN_link, EC_WPos(from->component), EC_WPos(to->component), EC_NN_LINK_LINE_WIDTH, pixelColor);
+    Entity* E_NN_link = Entity_Create(parent, false, "NN_Link", TS_WORLD, V3_ZERO, QUATERNION_IDENTITY, V3_ONE);
     // EC_NN_Link
     EC_NN_Link* ec_nn_link = EC_NN_Link_Create(E_NN_link, from, to/*, renderer_line*/);
     return ec_nn_link;

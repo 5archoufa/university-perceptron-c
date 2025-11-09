@@ -17,13 +17,13 @@ typedef struct EC_Player{
     // Human
     EC_Human *human;
     // Input
-    InputContext *inputContext;
+    InputListener *inputListener;
 } EC_Player;
 
 // ------------------------- 
 // Creation & Freeing 
 // -------------------------
 
-EC_Player *EC_Player_Prefab(Entity* parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale);
+EC_Player *EC_Player_Prefab(EC_Island *ec_island, Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale);
 
 #endif
