@@ -46,6 +46,8 @@
 #include "game/trigle/ec/ec_trigle.h"
 // State Machine
 #include "entity/components/ec_state_machine/ec_state_machine.h"
+// Rabbit
+#include "entity/components/ec_rabbit/ec_rabbit.h"
 
 // ----------------------------------------
 // External Variables
@@ -240,6 +242,10 @@ void Game_Awake()
     // EC_Trigle_SetActivePage(ec_trigle, 0);
 
     // EC_Trigle_SetState(ec_trigle, TRIGLE_STATE_FOCUSED);
+
+    // ============ YowYoh ============ //
+    // Entity *e_rabbit = Entity_Create(_world->parent, false, "Rabbit", TS_WORLD, V3_ZERO, QUATERNION_IDENTITY, V3_ONE);
+    // EC_Rabbit_Create(ec_island, e_rabbit);
 }
 
 void Game_Start()

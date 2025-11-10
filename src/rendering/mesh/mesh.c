@@ -16,7 +16,7 @@
 // Static
 // -------------------------
 
-static LogConfig _logConfig = {"Mesh", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
+static LogConfig _logConfig = {"Mesh", LOG_LEVEL_WARN, LOG_COLOR_BLUE};
 
 // -------------------------
 // Creation & Freeing

@@ -6,6 +6,11 @@
 #include "entity/transform.h"
 // Island
 #include "entity/components/island/island.h"
+// Feelings
+#include "game/creature/feelings.h"
+#include "game/creature/health.h"
+#include "game/creature/personality.h"
+#include "game/creature/stomach.h"
 
 // -------------------------
 // Types
@@ -16,7 +21,7 @@ typedef struct EC_Creature EC_Creature;
 typedef enum
 {
     CREATURE_T_HUMAN,
-    CREATURE_T_SHEEP,
+    CREATURE_T_ANIMAL,
     CREATURE_T_TRIGONOID
 } CreatureType;
 
@@ -42,6 +47,11 @@ struct EC_Creature
     Transform *transform;
     EC_MeshRenderer *ec_meshRenderer;
     EC_Island *ec_island;
+    // Feelings
+    EmotionalFeelings emoFeelings;
+    PhysicalFeeling **phyFeelings;
+    // Stomach
+    Stomach stomach;
     // Caching
     V3 previousPos;
 };

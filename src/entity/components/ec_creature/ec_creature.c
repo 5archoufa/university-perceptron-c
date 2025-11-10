@@ -6,6 +6,8 @@
 #include "entity/transform.h"
 // Physics
 #include "physics/physics-manager.h"
+// Stomach
+#include "game/creature/stomach.h"
 
 // -------------------------
 // Entity Events
@@ -74,5 +76,9 @@ EC_Creature *EC_Creature_Create(EC_Island *ec_island, Entity *entity, CreatureTy
     ec_creature->previousPos = (V3){0, 0, 0};
     // Component
     ec_creature->component = Component_Create(ec_creature, entity, EC_T_CREATURE, EC_Creature_Free, NULL, NULL, NULL, NULL, EC_Creature_FixedUpdate);
+    // Stomach
+    Stomach_Init(&ec_creature->stomach, 0.1f);
+    // Feelings
+    
     return ec_creature;
 }

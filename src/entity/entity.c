@@ -13,7 +13,7 @@
 // Constants
 // -------------------------
 
-static LogConfig _logConfig = {"Entity", LOG_LEVEL_INFO, LOG_COLOR_BLUE};
+static LogConfig _logConfig = {"Entity", LOG_LEVEL_WARN, LOG_COLOR_BLUE};
 static uint32_t _nextEntityId = 0;
 
 // -------------------------
