@@ -114,7 +114,10 @@
         "physics-manager.h": "c",
         "w_text.h": "c",
         "ec_mesh_renderer.h": "c",
-        "ec_camera_controller.h": "c"
+        "ec_camera_controller.h": "c",
+        "raycast_renderer.h": "c",
+        "feelings.h": "c",
+        "ec_state_machine.h": "c"
     },
     "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/gcc.exe",
 }

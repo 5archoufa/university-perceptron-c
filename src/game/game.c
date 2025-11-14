@@ -48,6 +48,8 @@
 #include "entity/components/ec_state_machine/ec_state_machine.h"
 // Rabbit
 #include "entity/components/ec_rabbit/ec_rabbit.h"
+// Logging
+#include "logging/logger.h"
 
 // ----------------------------------------
 // External Variables
@@ -67,6 +69,9 @@ static World *_world;
 static NeuralNetwork *_neuralNetwork;
 static EC_Camera *_ec_camera;
 static EC_Player *_ec_player;
+static size_t _onQuitCallbacks_size = 10;
+static GameQuitCallback *_onQuitCallbacks;
+static LogConfig _logConfig = {.name = "Game", .logLevel = LOG_LEVEL_INFO, .color = 0xFFF0F0FF};
 
 // -------------------------
 // Events
@@ -74,6 +79,13 @@ static EC_Player *_ec_player;
 
 void Game_Awake()
 {
+    // ============ Initialize OnQuit Callbacks ============ //
+    _onQuitCallbacks = malloc(sizeof(GameQuitCallback) * _onQuitCallbacks_size);
+    for(int i = 0;i<_onQuitCallbacks_size;i++)
+    {
+        _onQuitCallbacks[i] = NULL;
+    }
+
     // ============ Input Contexts ============ //
     INPUT_CONTEXT_GAMEPLAY = InputContext_Create("Gameplay", true);
     INPUT_CONTEXT_TRIGLE = InputContext_Create("Trigle", true);
@@ -140,45 +152,45 @@ void Game_Awake()
     // ============ Papati's Tree ============ //
 
     int i;
-    int posx=1;
-    int posz=1;
+    int posx = 1;
+    int posz = 1;
     for (i = 0; i <= 100; i++)
     {
         V3 treePos = islandCenter;
-        switch (posz){
-            case 1:
-             treePos.x = treePos.x+RandomFloat(0,islandMeshScale.x/2);
-             treePos.z = treePos.z+RandomFloat(0,islandMeshScale.z/2);
-             posz++;
-             break;
+        switch (posz)
+        {
+        case 1:
+            treePos.x = treePos.x + RandomFloat(0, islandMeshScale.x / 2);
+            treePos.z = treePos.z + RandomFloat(0, islandMeshScale.z / 2);
+            posz++;
+            break;
         case 2:
-            treePos.x = treePos.x+RandomFloat(0,islandMeshScale.x/2);
-            treePos.z = -(treePos.z+RandomFloat(0,islandMeshScale.z/2));
+            treePos.x = treePos.x + RandomFloat(0, islandMeshScale.x / 2);
+            treePos.z = -(treePos.z + RandomFloat(0, islandMeshScale.z / 2));
             posz++;
             break;
         case 3:
-        treePos.x = -(treePos.x+RandomFloat(0,islandMeshScale.x/2));
-        treePos.z = treePos.z+RandomFloat(0,islandMeshScale.z/2);
-        posz++;
-        break;
+            treePos.x = -(treePos.x + RandomFloat(0, islandMeshScale.x / 2));
+            treePos.z = treePos.z + RandomFloat(0, islandMeshScale.z / 2);
+            posz++;
+            break;
         case 4:
-        treePos.x = -(treePos.x+RandomFloat(0,islandMeshScale.x/2));
-        treePos.z = -(treePos.z+RandomFloat(0,islandMeshScale.z/2));
-        posz=1;
-        break;
-
+            treePos.x = -(treePos.x + RandomFloat(0, islandMeshScale.x / 2));
+            treePos.z = -(treePos.z + RandomFloat(0, islandMeshScale.z / 2));
+            posz = 1;
+            break;
         }
-                
-       // if(i%2==0) 
-      //  treePos.x = -treePos.x ; 
-      //  else treePos.z =-treePos.z;
-        
+
+        // if(i%2==0)
+        //  treePos.x = -treePos.x ;
+        //  else treePos.z =-treePos.z;
+
         treePos.y += 2.2; // #4e2b03ff
         Entity *e_tree_base = Prefab_Cube(_world->parent, true, TS_WORLD, treePos, Quat_FromEuler((V3){0, 0, 0}), V3_ONE, (V3){0.4, 2, 0.4}, 0xff032b4e)->component->entity;
         treePos.y += 0.5f;
         Entity *e_tree_leaf = Prefab_Cube(_world->parent, true, TS_WORLD, treePos, QUATERNION_IDENTITY, V3_ONE, (V3){1, 0.4, 0.6}, 0xff00ff11)->component->entity;
     }
-    
+
     // ============ Sun ============ //
     uint32_t sunColor = 0xfffff5de; // #def5ffff
     EC_Planet *ec_sun = Prefab_Planet(_world->parent, sunColor, 1.0f);
@@ -246,6 +258,9 @@ void Game_Awake()
     // ============ YowYoh ============ //
     // Entity *e_rabbit = Entity_Create(_world->parent, false, "Rabbit", TS_WORLD, V3_ZERO, QUATERNION_IDENTITY, V3_ONE);
     // EC_Rabbit_Create(ec_island, e_rabbit);
+
+    // ============ Test ============ //
+    Prefab_CubeWCollider(_world->parent, true, TS_WORLD, (V3){islandCenter.x, islandCenter.y + 5, islandCenter.z}, QUATERNION_IDENTITY, V3_ONE, (V3){2, 2, 2}, 0xff00ff00);
 }
 
 void Game_Start()
@@ -285,7 +300,55 @@ void Game_EndOfFrame()
 
 void Game_Free()
 {
-    // Input contexts will be automatically freed by InputManager_Free()
+    // Call OnQuit Callbacks
+    Log(&_logConfig, "Game_Free: Calling OnQuit callbacks...");
+    for (size_t i = 0; i < _onQuitCallbacks_size; i++)
+    {
+        if (_onQuitCallbacks[i] != NULL)
+        {
+            _onQuitCallbacks[i]();
+        }
+    }
+    LogSuccess(&_logConfig, "Game_Free: OnQuit callbacks finished.");
+    free(_onQuitCallbacks);
+    _onQuitCallbacks = NULL;
+    _onQuitCallbacks_size = 0;
+    // Free World
     World_All_Free();
+    _world = NULL;
+    // Free Neural Network
     NeuralNetwork_Free(_neuralNetwork);
+}
+
+// ----------------------------------------
+// Cleaning up
+// ----------------------------------------
+
+void Game_SubscribeOnQuit(GameQuitCallback callback)
+{
+    for (int i = 0; i < _onQuitCallbacks_size; i++)
+    {
+        if (_onQuitCallbacks[i] == NULL)
+        {
+            _onQuitCallbacks[i] = callback;
+            return;
+        }
+    }
+    // If we reach here, there was no space to add the callback
+    _onQuitCallbacks_size++;
+    _onQuitCallbacks = realloc(_onQuitCallbacks, sizeof(GameQuitCallback) * _onQuitCallbacks_size);
+    _onQuitCallbacks[_onQuitCallbacks_size - 1] = callback;
+}
+
+void Game_UnsubscribeOnQuit(GameQuitCallback callback)
+{
+    for (int i = 0; i < _onQuitCallbacks_size; i++)
+    {
+        if (_onQuitCallbacks[i] == callback)
+        {
+            _onQuitCallbacks[i] = NULL;
+            return;
+        }
+    }
+    LogWarning(&_logConfig, "Game_UnsubscribeOnQuit: Callback not found, ignoring.");
 }

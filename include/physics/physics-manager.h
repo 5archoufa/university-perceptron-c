@@ -39,6 +39,11 @@ typedef struct RaycastHit
     bool hit;
 } RaycastHit;
 
+typedef struct Ray{
+    V3 origin;
+    V3 direction;
+} Ray;
+
 // -------------------------
 // Types
 // -------------------------
@@ -118,7 +123,13 @@ void PhysicsManager_RemoveRigidBody(EC_RigidBody *ec_rigidbody);
  * @param layerMask Bitmask of layers to include in the raycast
  * @return true if something was hit, false otherwise
  */
-bool PhysicsManager_Raycast(V3 origin, V3 direction, float maxDistance, RaycastHit *outHit, uint32_t layerMask);
+bool PhysicsManager_Raycast(Ray *ray, float maxDistance, RaycastHit *outHit, uint32_t layerMask);
+
+/**
+ * @brief Initialize all fields of a RaycastHit to default values
+ * @param hit Pointer to the RaycastHit to initialize
+ */
+void RaycastHit_Init(RaycastHit *hit);
 
 /**
  * @brief Find all colliders overlapping a box shape

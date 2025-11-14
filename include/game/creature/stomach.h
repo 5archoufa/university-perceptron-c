@@ -10,7 +10,7 @@
 
 typedef struct Stomach
 {
-    PhysicalFeeling *feeling_hunger;
+    PhysicalFeeling feeling_hunger;
     float hunger;
     float starvationRate;
 } Stomach;
@@ -20,5 +20,6 @@ typedef struct Stomach
 // ----------------------------------------
 
 void Stomach_Init(Stomach *stomach, float starvationRate);
+void Stomach_Free(Stomach *stomach);
 
 #endif

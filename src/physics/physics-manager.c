@@ -897,12 +897,13 @@ static bool RaycastMesh(V3 origin, V3 direction, EC_Collider *collider,
     return false;
 }
 
-bool PhysicsManager_Raycast(V3 origin, V3 direction, float maxDistance, RaycastHit *outHit, uint32_t layerMask)
+bool PhysicsManager_Raycast(Ray *ray, float maxDistance, RaycastHit *outHit, uint32_t layerMask)
 {
     if (!_manager || !outHit)
         return false;
 
-    direction = V3_NORM(direction);
+    V3 direction = V3_NORM(ray->direction);
+    V3 origin = ray->origin;
 
     RaycastHit closestHit = {0};
     closestHit.distance = maxDistance;
@@ -1000,6 +1001,15 @@ bool PhysicsManager_Raycast(V3 origin, V3 direction, float maxDistance, RaycastH
 
     *outHit = closestHit;
     return closestHit.hit;
+}
+
+void RaycastHit_Init(RaycastHit *hit)
+{
+    hit->hit = false;
+    hit->collider = NULL;
+    hit->point = V3_ZERO;
+    hit->normal = V3_ZERO;
+    hit->distance = 0.0f;
 }
 
 int PhysicsManager_BoxCast(V3 center, V3 halfExtents, EC_Collider **outColliders, int maxColliders)

@@ -795,6 +795,33 @@ inline V3 Quat_RotateV3(Quaternion q, V3 v)
     return V3_ADD(v, V3_SCALE(cross2, 2.0f));
 }
 
+inline Quaternion Quat_LookDirection(V3 direction)
+{
+    V3 forward = {0, 0, 1};
+    V3 dir = V3_NORM(direction);
+
+    float dot = V3_DOT(forward, dir);
+
+    // If vectors are the same → no rotation
+    if (fabsf(dot - 1.0f) < 1e-6f)
+        return (Quaternion){1, 0, 0, 0};
+
+    // If vectors are opposite → rotate 180° around a perpendicular axis
+    if (fabsf(dot + 1.0f) < 1e-6f)
+    {
+        // Choose perpendicular axis (Y if possible, otherwise X)
+        V3 axis = (fabsf(forward.z) < 0.9f) ? (V3){0, 1, 0} : (V3){1, 0, 0};
+        return (Quaternion){0, axis.x, axis.y, axis.z};
+    }
+
+    V3 axis = V3_CROSS(dir, forward);
+    axis = V3_NORM(axis);
+
+    float angleRadians = acosf(dot);
+    float angleDegrees = Degrees(angleRadians); // Convert radians to degrees
+    return Quat_FromAxisAngle(axis, angleDegrees);
+}
+
 inline Quaternion Quat_Div(Quaternion a, Quaternion b)
 {
     float norm_b = b.w * b.w + b.x * b.x + b.y * b.y + b.z * b.z;

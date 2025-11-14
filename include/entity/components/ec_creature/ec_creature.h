@@ -11,6 +11,8 @@
 #include "game/creature/health.h"
 #include "game/creature/personality.h"
 #include "game/creature/stomach.h"
+// Vision
+#include "game/creature/vision.h"
 
 // -------------------------
 // Types
@@ -48,10 +50,12 @@ struct EC_Creature
     EC_MeshRenderer *ec_meshRenderer;
     EC_Island *ec_island;
     // Feelings
-    EmotionalFeelings emoFeelings;
-    PhysicalFeeling **phyFeelings;
+    // EmotionalFeelings emoFeelings;
+    // PhysicalFeeling **phyFeelings;
     // Stomach
     Stomach stomach;
+    // Vision
+    CreatureVision vision;
     // Caching
     V3 previousPos;
 };

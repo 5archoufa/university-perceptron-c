@@ -42,6 +42,7 @@ extern const V3 WORLD_BACK;
 #define E_LAYER_TERRAIN 3
 #define E_LAYER_TRIGLE 4
 #define E_LAYER_GUI 5
+#define E_LAYER_TREE 6
 
 // -------------------------
 // Tags

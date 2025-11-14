@@ -135,5 +135,6 @@ Quaternion Quat_Mul(Quaternion a, Quaternion b);
 Quaternion Quat_Div(Quaternion a, Quaternion b);
 Quaternion Quat_Norm(Quaternion q);
 V3 Quat_RotateV3(Quaternion q, V3 v);
+Quaternion Quat_LookDirection(V3 direction);
 
 #endif

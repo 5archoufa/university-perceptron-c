@@ -658,7 +658,6 @@ static void Render_Skybox(EC_Camera *ec_camera)
 static void Camera_LateUpdate(Component *component)
 {
     EC_Camera *ec_camera = component->self;
-    Transform *transform = &component->entity->transform;
 
     // Reset bound shader program tracker
     ec_camera->boundShaderProgram = 0;
@@ -669,7 +668,6 @@ static void Camera_LateUpdate(Component *component)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // ============ Prepare Global Data ============ //
-    ShaderGlobalData *globalData = ShaderManager_GetGlobalData();
     CalculateAndUploadGlobalData(ec_camera);
 
     // ============ Skybox ============ //
@@ -787,7 +785,7 @@ static EC_Camera *EC_Camera_Create(Entity *entity,
     ec_camera->backgroundColor = backgroundColor;
     // Render Modes
 #ifdef DEBUG_COLLIDERS
-    ec_camera->renderColliders = false;
+    ec_camera->renderColliders = true;
 #endif
     ec_camera->renderWireframe = false;
     ec_camera->renderSolid = true;

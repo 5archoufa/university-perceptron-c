@@ -8,6 +8,9 @@
 // State Machine
 #include "entity/components/ec_state_machine/ec_state_machine.h"
 
+// Define a callback that triggers when application quits
+typedef void (*GameQuitCallback)(void);
+
 // ----------------------------------------
 // Inputs
 // ----------------------------------------
@@ -29,5 +32,7 @@ void Game_LateUpdate();
 void Game_FixedUpdate();
 void Game_Free();
 void Game_EndOfFrame();
+void Game_SubscribeOnQuit(GameQuitCallback callback);
+void Game_UnsubscribeOnQuit(GameQuitCallback callback);
 
 #endif

@@ -16,15 +16,17 @@ typedef struct EmotionalFeelings{
     float guilt;
 } EmotionalFeelings;
 
+/// @brief Use PhysicalFeeling_Init and PhysicalFeeling_Free to manage memory
 typedef struct PhysicalFeeling{
     char *name;
     float value;
 } PhysicalFeeling;
 
 // ----------------------------------------
-// Initialization 
+// Physical Feelings
 // ----------------------------------------
 
-PhysicalFeeling *PhysicalFeeling_Create(char *name, float initialValue);
+void PhysicalFeeling_Init(PhysicalFeeling *feeling, const char *name, float value);
+void PhysicalFeeling_Free(PhysicalFeeling *feeling);
 
 #endif
