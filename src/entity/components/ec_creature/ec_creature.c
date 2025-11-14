@@ -50,7 +50,7 @@ static void EC_Creature_FixedUpdate(Component *component)
         ec_creature->previousPos = currentPos;
     }
     // ============ Vision ============ //
-    CreatureVision_PerformVision(&ec_creature->vision, V3_ADD(T_WPos(ec_creature->transform), (V3){0.0f, 1.0f, 0.0f}), T_Forward(ec_creature->transform));
+    CreatureVision_PerformVision(&ec_creature->vision, V3_ADD(T_WPos(ec_creature->transform), (V3){0.0f, 1.8f, 0.0f}), T_Forward(ec_creature->transform));
 }
 
 // -------------------------
@@ -84,9 +84,9 @@ EC_Creature *EC_Creature_Create(EC_Island *ec_island, Entity *entity, CreatureTy
     // Stomach
     Stomach_Init(&ec_creature->stomach, 0.1f);
     // vision
-    CreatureVision_Init(&ec_creature->vision, 64, 10.0f, 170.0f, E_LAYER_CREATURE | E_LAYER_TREE | E_LAYER_DEFAULT, true);
+    CreatureVision_Init(&ec_creature->vision, 64, 10.0f, 170.0f, 0.6f, E_LAYER_CREATURE | E_LAYER_TREE | E_LAYER_DEFAULT, true);
     // Box Collider
-    EC_Collider *collider = EC_Collider_Create(entity, (V3){0.0f, 5.0f, 0.0f}, false, EC_COLLIDER_BOX, (ColliderData){.box = {.scale = (V3){0.5f, 1.8f, 0.5f}}});
+    EC_Collider *collider = EC_Collider_Create(entity, (V3){0.0f, 0.9f, 0.0f}, false, EC_COLLIDER_BOX, (ColliderData){.box = {.scale = (V3){0.5f, 1.8f, 0.5f}}});
     // Rigidbody
     RigidBodyConstraints constraints = RigidBodyConstraints_Humanoid();
     EC_RigidBody_Create(entity, collider, 1.0f, false, constraints);

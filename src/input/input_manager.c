@@ -36,9 +36,9 @@ static KeyState *Mapping_GetKeyState(InputMapping *mapping, int keyId)
 {
     for (size_t i = 0; i < mapping->keys_size; i++)
     {
-        if (mapping->keys[i].id == (uint32_t)keyId)
+        if (mapping->keys[i]->id == (uint32_t)keyId)
         {
-            return &mapping->keys[i];
+            return mapping->keys[i];
         }
     }
     return NULL;
@@ -48,9 +48,9 @@ static ButtonState *Mapping_GetButtonState(InputMapping *mapping, int buttonId)
 {
     for (size_t i = 0; i < mapping->buttons_size; i++)
     {
-        if (mapping->buttons[i].id == (uint32_t)buttonId)
+        if (mapping->buttons[i]->id == (uint32_t)buttonId)
         {
-            return &mapping->buttons[i];
+            return mapping->buttons[i];
         }
     }
     return NULL;
@@ -143,7 +143,7 @@ static void cursor_position_callback(GLFWwindow *window, double xpos, double ypo
                 InputMapping *mapping = &listener->mappings[m];
                 for (size_t i = 0; i < mapping->motions_size; i++)
                 {
-                    MotionState *motion = &mapping->motions[i];
+                    MotionState *motion = mapping->motions[i];
                     motion->delta = V2_SUB(newPos, motion->position);
                     motion->position = newPos;
                 }
@@ -298,43 +298,63 @@ void InputMapping_Free(InputMapping *mapping)
 {
     if (!mapping) return;
     
+    // Free individual key states
+    for (size_t i = 0; i < mapping->keys_size; i++)
+    {
+        free(mapping->keys[i]);
+    }
     free(mapping->keys);
+    
+    // Free individual button states
+    for (size_t i = 0; i < mapping->buttons_size; i++)
+    {
+        free(mapping->buttons[i]);
+    }
     free(mapping->buttons);
+    
+    // Free individual motion states
+    for (size_t i = 0; i < mapping->motions_size; i++)
+    {
+        free(mapping->motions[i]);
+    }
     free(mapping->motions);
 }
 
 KeyState *InputMapping_AddKey(InputMapping *mapping, uint32_t keyId)
 {
     mapping->keys_size++;
-    mapping->keys = realloc(mapping->keys, sizeof(KeyState) * mapping->keys_size);
-    KeyState *key = &mapping->keys[mapping->keys_size - 1];
+    mapping->keys = realloc(mapping->keys, sizeof(KeyState*) * mapping->keys_size);
+    KeyState *key = malloc(sizeof(KeyState));
     key->id = keyId;
     key->isPressed = false;
     key->isReleased = false;
     key->isDown = false;
+    mapping->keys[mapping->keys_size - 1] = key;
     return key;
 }
 
 ButtonState *InputMapping_AddButton(InputMapping *mapping, uint32_t buttonId)
 {
     mapping->buttons_size++;
-    mapping->buttons = realloc(mapping->buttons, sizeof(ButtonState) * mapping->buttons_size);
-    ButtonState *button = &mapping->buttons[mapping->buttons_size - 1];
+    mapping->buttons = realloc(mapping->buttons, sizeof(ButtonState*) * mapping->buttons_size);
+    ButtonState *button = malloc(sizeof(ButtonState));
     button->id = buttonId;
     button->isPressed = false;
     button->isReleased = false;
     button->isDown = false;
+    mapping->buttons[mapping->buttons_size - 1] = button;
     return button;
 }
 
 MotionState *InputMapping_AddMotion(InputMapping *mapping, uint32_t motionId)
 {
     mapping->motions_size++;
-    mapping->motions = realloc(mapping->motions, sizeof(MotionState) * mapping->motions_size);
-    MotionState *motion = &mapping->motions[mapping->motions_size - 1];
+    mapping->motions = realloc(mapping->motions, sizeof(MotionState*) * mapping->motions_size);
+    MotionState *motion = malloc(sizeof(MotionState));
     motion->id = motionId;
     motion->position = V2_ZERO;
     motion->delta = V2_ZERO;
+    mapping->motions[mapping->motions_size - 1] = motion;
     return motion;
 }
 
@@ -399,17 +419,17 @@ void InputManager_ResetInputs()
                 InputMapping *mapping = &listener->mappings[m];
                 for (size_t k = 0; k < mapping->keys_size; k++)
                 {
-                    mapping->keys[k].isPressed = false;
-                    mapping->keys[k].isReleased = false;
+                    mapping->keys[k]->isPressed = false;
+                    mapping->keys[k]->isReleased = false;
                 }
                 for (size_t b = 0; b < mapping->buttons_size; b++)
                 {
-                    mapping->buttons[b].isPressed = false;
-                    mapping->buttons[b].isReleased = false;
+                    mapping->buttons[b]->isPressed = false;
+                    mapping->buttons[b]->isReleased = false;
                 }
                 for (size_t mo = 0; mo < mapping->motions_size; mo++)
                 {
-                    mapping->motions[mo].delta = V2_ZERO;
+                    mapping->motions[mo]->delta = V2_ZERO;
                 }
             }
         }

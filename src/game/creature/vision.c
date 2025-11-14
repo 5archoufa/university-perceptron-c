@@ -6,10 +6,19 @@
 // Initialization & Freeing
 // ----------------------------------------
 
-void CreatureVision_Init(CreatureVision *vision, int raycastHits_size, float viewDistance, float viewAngle, uint32_t layermask, bool renderRays)
+/// @brief Initializes the CreatureVision structure with the specified parameters.
+/// @param vision 
+/// @param raycastHits_size 
+/// @param viewDistance This is the maximum distance the creature can see. The offsetFromOrigin will be subtracted from this value.
+/// @param viewAngle 
+/// @param offsetFromOrigin 
+/// @param layermask 
+/// @param renderRays 
+void CreatureVision_Init(CreatureVision *vision, int raycastHits_size, float viewDistance, float viewAngle, float offsetFromOrigin, uint32_t layermask, bool renderRays)
 {
-    vision->viewDistance = viewDistance;
+    vision->viewDistance = viewDistance - offsetFromOrigin;
     vision->viewAngle = viewAngle;
+    vision->offsetFromOrigin = offsetFromOrigin;
     vision->layermask = layermask;
     vision->raycastHits_size = raycastHits_size;
     
@@ -99,7 +108,7 @@ void CreatureVision_PerformVision(CreatureVision *vision, V3 position, V3 forwar
         rayDirection = V3_NORM(rayDirection);
         
         // Update the stored ray
-        vision->rays[i].origin = position;
+        vision->rays[i].origin = V3_ADD(position, V3_SCALE(rayDirection, vision->offsetFromOrigin));
         vision->rays[i].direction = rayDirection;
         
         // Perform the raycast

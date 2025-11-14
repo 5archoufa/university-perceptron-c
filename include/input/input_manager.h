@@ -46,13 +46,13 @@ typedef struct InputMapping
     uint32_t contextId;
     // Keys
     size_t keys_size;
-    KeyState *keys;
+    KeyState **keys;  // Array of pointers to prevent invalidation on realloc
     // Buttons
     size_t buttons_size;
-    ButtonState *buttons;
+    ButtonState **buttons;  // Array of pointers to prevent invalidation on realloc
     // Motions
     size_t motions_size;
-    MotionState *motions;
+    MotionState **motions;  // Array of pointers to prevent invalidation on realloc
 } InputMapping;
 
 typedef struct InputListener

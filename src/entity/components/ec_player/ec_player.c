@@ -39,15 +39,15 @@ static KeyState *PLAYER_INPUT_LOOK_RIGHT = NULL;
 static void EC_Player_Update(Component *component)
 {
     EC_Player *ec_player = component->self;
-    // ============ Creature Input ============ // 
+    // ============ Creature Input ============ //
     V2 input_move = {
         PLAYER_INPUT_RIGHT->isDown - PLAYER_INPUT_LEFT->isDown,
         PLAYER_INPUT_FORWARD->isDown - PLAYER_INPUT_BACKWARD->isDown,
     };
+    printf("Input Move: %.2f, %.2f\n", input_move.x, input_move.y);
     V2 input_look = {
         PLAYER_INPUT_LOOK_RIGHT->isDown - PLAYER_INPUT_LOOK_LEFT->isDown,
-        0
-    };
+        0};
 
     ec_player->human->creature->controller.input_move = V2_NORM(input_move);
     ec_player->human->creature->controller.input_look = V2_NORM(input_look);
@@ -78,9 +78,9 @@ static EC_Player *EC_Player_Create(Entity *entity, EC_Human *human, InputListene
 EC_Player *EC_Player_Prefab(EC_Island *ec_island, Entity *parent, TransformSpace TS, V3 position, Quaternion rotation, V3 scale)
 {
     Entity *e_player = Entity_Create(parent, false, "Player", TS, position, rotation, scale);
-    // ============ Human ============ // 
+    // ============ Human ============ //
     EC_Human *ec_human = EC_Human_Create(ec_island, e_player);
-    // ============ Input ============ // 
+    // ============ Input ============ //
     InputListener *inputListener = InputContext_AddListener(INPUT_CONTEXT_GAMEPLAY, "Player Input");
     InputMapping *mapping = InputListener_AddMapping(inputListener, INPUT_CONTEXT_GAMEPLAY->id);
     PLAYER_INPUT_FORWARD = InputMapping_AddKey(mapping, GLFW_KEY_W);
@@ -89,7 +89,7 @@ EC_Player *EC_Player_Prefab(EC_Island *ec_island, Entity *parent, TransformSpace
     PLAYER_INPUT_RIGHT = InputMapping_AddKey(mapping, GLFW_KEY_D);
     PLAYER_INPUT_LOOK_LEFT = InputMapping_AddKey(mapping, GLFW_KEY_KP_4);
     PLAYER_INPUT_LOOK_RIGHT = InputMapping_AddKey(mapping, GLFW_KEY_KP_6);
-    // ============ Player ============ // 
+    // ============ Player ============ //
     EC_Player *ec_player = EC_Player_Create(e_player, ec_human, inputListener);
     // ============ Layer ============ //
     Entity_SetLayer(e_player, E_LAYER_CREATURE, true);

@@ -21,6 +21,8 @@ typedef struct CreatureVision
     float viewDistance;
     /// @brief In degrees, the total angle of vision
     float viewAngle;
+    /// @brief Offset from the origin position to cast rays from
+    float offsetFromOrigin;
     /// @brief Bitmask representing which layers the creature can see
     uint32_t layermask;
     /// @brief Number of raycast hits stored
@@ -37,7 +39,7 @@ typedef struct CreatureVision
 // Initialization & Freeing 
 // ----------------------------------------
 
-void CreatureVision_Init(CreatureVision *vision, int raycastHits_size, float viewDistance, float viewAngle, uint32_t layermask, bool renderRays);
+void CreatureVision_Init(CreatureVision *vision, int raycastHits_size, float viewDistance, float viewAngle, float offsetFromOrigin, uint32_t layermask, bool renderRays);
 void CreatureVision_Free(CreatureVision *vision);
 
 // ----------------------------------------

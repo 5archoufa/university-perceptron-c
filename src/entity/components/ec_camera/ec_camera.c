@@ -228,12 +228,25 @@ static void Camera_RenderDebugColliders(EC_Camera *ec_camera)
         if (!collider->debugMesh)
             continue;
 
-        // Upload model matrix based on entity transform
+        // Get entity transform and apply collider offset
         Entity *entity = collider->component->entity;
+        
+        // Start with the entity's world matrix
         T_WMatrix(&entity->transform, shader->model);
-        glUniformMatrix4fv(shader->modelLoc, 1, GL_FALSE, (float *)shader->model);
+        
+        // Create translation matrix for the offset
+        mat4 offsetMatrix;
+        vec3 offset = {collider->offset.x, collider->offset.y, collider->offset.z};
+        glm_translate_make(offsetMatrix, offset);
+        
+        // Combine: model = entity_transform * offset
+        mat4 finalModel;
+        glm_mat4_mul(shader->model, offsetMatrix, finalModel);
+        
+        // Upload the final model matrix
+        glUniformMatrix4fv(shader->modelLoc, 1, GL_FALSE, (float *)finalModel);
 
-        // Render the debug mesh as triangles (not lines anymore)
+        // Render the debug mesh as triangles
         Mesh *debugMesh = collider->debugMesh;
         glBindVertexArray(debugMesh->VAO);
         glDrawElements(GL_TRIANGLES, debugMesh->indices_size, GL_UNSIGNED_INT, 0);
