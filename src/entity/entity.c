@@ -219,7 +219,7 @@ void Entity_Free(Entity *entity, bool updateParent)
         Transform_RemoveChild(entity->transform.parent, &entity->transform);
     }
     // Free Components
-    printf("[%s]:: Will free %d components...\n", entity->name, entity->componentCount);
+    LogFree(&_logConfig, "%d components...\n", entity->componentCount);
     for (int i = 0; i < entity->componentCount; i++)
     {
         Component_Free(entity->component_values[i]);

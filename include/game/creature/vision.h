@@ -6,6 +6,7 @@
 #include "physics/raycast_renderer.h"
 // Math
 #include "utilities/math/v3.h"
+#include "utilities/math/v2.h"
 // C
 #include <stddef.h>
 #include <stdint.h>
@@ -19,8 +20,11 @@ typedef struct CreatureVision
 {
     /// @brief Maximum distance the creature can see
     float viewDistance;
-    /// @brief In degrees, the total angle of vision
-    float viewAngle;
+    /// @brief In degrees, the total angle of vision for X and Y axies
+    V2 fov;
+    float fov_yOffset;
+    /// @brief Number of rays horizontally and vertically
+    V2_INT distribution;
     /// @brief Offset from the origin position to cast rays from
     float offsetFromOrigin;
     /// @brief Bitmask representing which layers the creature can see
@@ -39,7 +43,7 @@ typedef struct CreatureVision
 // Initialization & Freeing 
 // ----------------------------------------
 
-void CreatureVision_Init(CreatureVision *vision, int raycastHits_size, float viewDistance, float viewAngle, float offsetFromOrigin, uint32_t layermask, bool renderRays);
+void CreatureVision_Init(CreatureVision *vision, V2_INT distribution, float viewDistance, V2 fov, float fov_yOffset, float offsetFromOrigin, uint32_t layermask, bool renderRays);
 void CreatureVision_Free(CreatureVision *vision);
 
 // ----------------------------------------

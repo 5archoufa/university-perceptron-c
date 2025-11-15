@@ -84,7 +84,9 @@ EC_Creature *EC_Creature_Create(EC_Island *ec_island, Entity *entity, CreatureTy
     // Stomach
     Stomach_Init(&ec_creature->stomach, 0.1f);
     // vision
-    CreatureVision_Init(&ec_creature->vision, 64, 10.0f, 170.0f, 0.6f, E_LAYER_CREATURE | E_LAYER_TREE | E_LAYER_DEFAULT, true);
+    V2 fov = (V2){170.0f, 50.0f};
+    V2_INT distribution = {.x = 50, .y = 15};
+    CreatureVision_Init(&ec_creature->vision, distribution, 30.0f, fov, 20.0f, 0.6f, E_LAYER_CREATURE | E_LAYER_TREE | E_LAYER_DEFAULT, true);
     // Box Collider
     EC_Collider *collider = EC_Collider_Create(entity, (V3){0.0f, 0.9f, 0.0f}, false, EC_COLLIDER_BOX, (ColliderData){.box = {.scale = (V3){0.5f, 1.8f, 0.5f}}});
     // Rigidbody
@@ -95,6 +97,5 @@ EC_Creature *EC_Creature_Create(EC_Island *ec_island, Entity *entity, CreatureTy
     // TODO: Feelings
     // Component
     ec_creature->component = Component_Create(ec_creature, entity, EC_T_CREATURE, EC_Creature_Free, NULL, NULL, NULL, NULL, EC_Creature_FixedUpdate);
-
     return ec_creature;
 }

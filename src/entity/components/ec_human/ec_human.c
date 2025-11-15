@@ -17,8 +17,8 @@
 
 static const uint32_t COLOR_HUMAN_SKIN_WHITE = 0xffbde0ff; // #ffe0bdff
 
-// ------------------------- 
-// Entity Events 
+// -------------------------
+// Entity Events
 // -------------------------
 
 static void EC_Human_Free(Component *component)
@@ -33,7 +33,7 @@ EC_Human *EC_Human_Create(EC_Island *ec_island, Entity *e_human)
     // ============ Body ============ //
     Entity *e_body = Entity_Create(e_human, false, "Body", TS_LOCAL, (V3){0, 0, 0}, QUATERNION_IDENTITY, V3_ONE);
     // Mesh
-    Mesh* mesh = Mesh_CreateCylinder(0.2, 1.8, 6, (V3){0.5f, 0.0f, 0.5f}, COLOR_HUMAN_SKIN_WHITE);
+    Mesh *mesh = Mesh_CreateCylinder(0.2, 1.8, 6, (V3){0.5f, 0.0f, 0.5f}, COLOR_HUMAN_SKIN_WHITE);
     V3 meshScale = {0.4f, 1.8f, 0.4f};
     // Renderer
     EC_MeshRenderer *ec_meshRenderer = EC_MeshRenderer_Create(e_body, mesh, meshScale, NULL);
@@ -59,11 +59,25 @@ EC_Human *EC_Human_Create(EC_Island *ec_island, Entity *e_human)
     // Right Eye
     Entity *e_eye_right = Entity_Create(e_head, false, "Eye_Right", TS_LOCAL, (V3){eyeOffsetX, eyeOffsetY, eyeOffsetZ}, QUATERNION_IDENTITY, V3_ONE);
     EC_MeshRenderer *ec_meshRenderer_eye_right = EC_MeshRenderer_Create(e_eye_right, mesh_eye, meshScale_eye, NULL);
-    // ============ Creature ============ // 
+    // ============ Creature ============ //
     ec_human->creature = EC_Creature_Create(ec_island, e_human, CREATURE_T_HUMAN, ec_meshRenderer, (V2){3.0f, 3.0f}, (V2){150.0f, 150.0f});
-    // ============ Component ============ // 
+    // ============ Component ============ //
     ec_human->component = Component_Create(ec_human, e_human, EC_T_HUMAN, EC_Human_Free, NULL, NULL, NULL, NULL, NULL);
     // Layer
     Entity_SetLayer(e_body, E_LAYER_CREATURE, true);
     return ec_human;
+}
+
+// ----------------------------------------
+// Prefabs
+// ----------------------------------------
+
+EC_Human Prefab_Human(Entity *parent, EC_Island *ec_island, TransformSpace TS, V3 position, Quaternion rotation, V3 scale)
+{
+    // ============ Entity ============ //
+    Entity *e_human = Entity_Create(parent, false, "Player", TS, position, rotation, scale);
+    // ============ Human ============ //
+    EC_Human *ec_human = EC_Human_Create(ec_island, e_human);
+    Entity_SetLayer(e_human, E_LAYER_CREATURE, true);
+    return *ec_human;
 }

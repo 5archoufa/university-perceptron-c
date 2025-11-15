@@ -44,7 +44,6 @@ static void EC_Player_Update(Component *component)
         PLAYER_INPUT_RIGHT->isDown - PLAYER_INPUT_LEFT->isDown,
         PLAYER_INPUT_FORWARD->isDown - PLAYER_INPUT_BACKWARD->isDown,
     };
-    printf("Input Move: %.2f, %.2f\n", input_move.x, input_move.y);
     V2 input_look = {
         PLAYER_INPUT_LOOK_RIGHT->isDown - PLAYER_INPUT_LOOK_LEFT->isDown,
         0};

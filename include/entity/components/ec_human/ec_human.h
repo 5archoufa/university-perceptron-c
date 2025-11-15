@@ -22,4 +22,10 @@ typedef struct EC_Human
 
 EC_Human *EC_Human_Create(EC_Island *ec_island, Entity *e_human);
 
+// ----------------------------------------
+// Prefabs 
+// ----------------------------------------
+
+EC_Human Prefab_Human(Entity *parent, EC_Island *ec_island, TransformSpace TS, V3 position, Quaternion rotation, V3 scale);
+
 #endif

@@ -8,11 +8,12 @@
 #include "rendering/mesh/mesh.h"
 
 // ----------------------------------------
-// Static Variables 
+// Static Variables
 // ----------------------------------------
 
 static Mesh *_lineMesh = NULL;
 static Mesh *_endPointMesh = NULL;
+static bool _isInitialized = false;
 
 // ----------------------------------------
 // Static Methods
@@ -38,9 +39,12 @@ static void Game_OnQuit()
 
 void RaycastRenderer_Init(RaycastRenderer *renderer, Ray *ray, float thickness)
 {
-    if (_lineMesh == NULL || _endPointMesh == NULL)
+    if (!_isInitialized)
     {
         Game_SubscribeOnQuit(Game_OnQuit);
+        _lineMesh = Mesh_CreateCube(true, V3_ONE, (V3){0.5f, 0.5f, 0.0f}, 0xFFFFFFFF);
+        _endPointMesh = Mesh_CreateSphere(1.0f, 5, 5, (V3){0.5f, 0.5f, 1.0f}, 0xFFFFFFFF, false);
+        _isInitialized = true;
     }
     renderer->thickness = thickness;
     renderer->ray = ray;
@@ -48,22 +52,12 @@ void RaycastRenderer_Init(RaycastRenderer *renderer, Ray *ray, float thickness)
     // Entity
     Entity *lineEntity = Entity_Create(World_GetRoot(), false, "RaycastRenderer_Line", TS_WORLD, (V3){0, 0, 0}, QUATERNION_IDENTITY, (V3){0.5, 0.5f, 0.0f});
     renderer->lineT = &lineEntity->transform;
-    // Mesh
-    if (_lineMesh == NULL)
-    {
-        _lineMesh = Mesh_CreateCube(true, V3_ONE, (V3){0.5f, 0.5f, 0.0f}, 0xFFFFFFFF);
-    }
     // Mesh Renderer
     EC_MeshRenderer *meshRenderer = EC_MeshRenderer_Create(lineEntity, _lineMesh, (V3){thickness, thickness, 0.0f}, NULL);
     // ============ Hit Endpoint ============ //
     // Entity
     Entity *endPointEntity = Entity_Create(World_GetRoot(), false, "RaycastRenderer_EndPoint", TS_WORLD, (V3){0, 0, 0}, QUATERNION_IDENTITY, V3_SCALE(V3_ONE, 0.3f));
     renderer->endPointT = &endPointEntity->transform;
-    // Mesh
-    if (_endPointMesh == NULL)
-    {
-        _endPointMesh = Mesh_CreateSphere(1.0f, 5, 5, (V3){0.5f, 0.5f, 1.0f}, 0xFFFFFFFF, false);
-    }
     // Mesh Renderer
     meshRenderer = EC_MeshRenderer_Create(endPointEntity, _endPointMesh, V3_ONE, NULL);
     // ============ Set Inactive ============ //
@@ -100,14 +94,17 @@ void RaycastRenderer_RenderRaycast(RaycastRenderer *renderer, float maxDistance,
     // Calculate line length and endpoint
     float lineLength;
     V3 endPoint;
-    if (hit->hit) {
+    if (hit->hit)
+    {
         lineLength = hit->distance;
         endPoint = hit->point;
-    } else {
+    }
+    else
+    {
         lineLength = maxDistance;
         endPoint = V3_ADD(renderer->ray->origin, V3_SCALE(V3_NORM(renderer->ray->direction), maxDistance));
     }
-    
+
     // Position the line at midpoint between origin and endpoint
     T_WPos_Set(renderer->lineT, renderer->ray->origin);
     // Rotate in direction of ray

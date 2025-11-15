@@ -151,45 +151,45 @@ void Game_Awake()
 
     // ============ Papati's Tree ============ //
 
-    int i;
-    int posx = 1;
-    int posz = 1;
-    for (i = 0; i <= 100; i++)
-    {
-        V3 treePos = islandCenter;
-        switch (posz)
-        {
-        case 1:
-            treePos.x = treePos.x + RandomFloat(0, islandMeshScale.x / 2);
-            treePos.z = treePos.z + RandomFloat(0, islandMeshScale.z / 2);
-            posz++;
-            break;
-        case 2:
-            treePos.x = treePos.x + RandomFloat(0, islandMeshScale.x / 2);
-            treePos.z = -(treePos.z + RandomFloat(0, islandMeshScale.z / 2));
-            posz++;
-            break;
-        case 3:
-            treePos.x = -(treePos.x + RandomFloat(0, islandMeshScale.x / 2));
-            treePos.z = treePos.z + RandomFloat(0, islandMeshScale.z / 2);
-            posz++;
-            break;
-        case 4:
-            treePos.x = -(treePos.x + RandomFloat(0, islandMeshScale.x / 2));
-            treePos.z = -(treePos.z + RandomFloat(0, islandMeshScale.z / 2));
-            posz = 1;
-            break;
-        }
+    // int i;
+    // int posx = 1;
+    // int posz = 1;
+    // for (i = 0; i <= 100; i++)
+    // {
+    //     V3 treePos = islandCenter;
+    //     switch (posz)
+    //     {
+    //     case 1:
+    //         treePos.x = treePos.x + RandomFloat(0, islandMeshScale.x / 2);
+    //         treePos.z = treePos.z + RandomFloat(0, islandMeshScale.z / 2);
+    //         posz++;
+    //         break;
+    //     case 2:
+    //         treePos.x = treePos.x + RandomFloat(0, islandMeshScale.x / 2);
+    //         treePos.z = -(treePos.z + RandomFloat(0, islandMeshScale.z / 2));
+    //         posz++;
+    //         break;
+    //     case 3:
+    //         treePos.x = -(treePos.x + RandomFloat(0, islandMeshScale.x / 2));
+    //         treePos.z = treePos.z + RandomFloat(0, islandMeshScale.z / 2);
+    //         posz++;
+    //         break;
+    //     case 4:
+    //         treePos.x = -(treePos.x + RandomFloat(0, islandMeshScale.x / 2));
+    //         treePos.z = -(treePos.z + RandomFloat(0, islandMeshScale.z / 2));
+    //         posz = 1;
+    //         break;
+    //     }
 
-        // if(i%2==0)
-        //  treePos.x = -treePos.x ;
-        //  else treePos.z =-treePos.z;
+    //     // if(i%2==0)
+    //     //  treePos.x = -treePos.x ;
+    //     //  else treePos.z =-treePos.z;
 
-        treePos.y += 2.2; // #4e2b03ff
-        Entity *e_tree_base = Prefab_Cube(_world->parent, true, TS_WORLD, treePos, Quat_FromEuler((V3){0, 0, 0}), V3_ONE, (V3){0.4, 2, 0.4}, 0xff032b4e)->component->entity;
-        treePos.y += 0.5f;
-        Entity *e_tree_leaf = Prefab_Cube(_world->parent, true, TS_WORLD, treePos, QUATERNION_IDENTITY, V3_ONE, (V3){1, 0.4, 0.6}, 0xff00ff11)->component->entity;
-    }
+    //     treePos.y += 2.2; // #4e2b03ff
+    //     Entity *e_tree_base = Prefab_Cube(_world->parent, true, TS_WORLD, treePos, Quat_FromEuler((V3){0, 0, 0}), V3_ONE, (V3){0.4, 2, 0.4}, 0xff032b4e)->component->entity;
+    //     treePos.y += 0.5f;
+    //     Entity *e_tree_leaf = Prefab_Cube(_world->parent, true, TS_WORLD, treePos, QUATERNION_IDENTITY, V3_ONE, (V3){1, 0.4, 0.6}, 0xff00ff11)->component->entity;
+    // }
 
     // ============ Sun ============ //
     uint32_t sunColor = 0xfffff5de; // #def5ffff
@@ -213,8 +213,20 @@ void Game_Awake()
     };
     _ec_player = EC_Player_Prefab(ec_island, _world->parent, TS_WORLD, playerPos, Quat_FromEuler((V3){0, 180, 0}), V3_ONE);
 
+    // ============ Create 50 humans ============ //
+
+    for(int i = 0; i < 1; i++)
+    {
+        V3 randomPos = {
+            RandomFloat(islandCenter.x - islandRadius * 0.5f, islandCenter.x + islandRadius * 0.5f),
+            islandCenter.y + 1000.0f,
+            RandomFloat(islandCenter.z - islandRadius * 0.5f, islandCenter.z + islandRadius * 0.5f),
+        };
+        Prefab_Human(_world->parent, ec_island, TS_WORLD, randomPos, QUATERNION_IDENTITY, V3_ONE);
+    }
+
     // ============ ZOUBINETE's Tree ============ //
-    uint32_t treeColor = 0xff0e0878; // #78080eff
+    //uint32_t treeColor = 0xff0e0878; // #78080eff
     // EC_Tree *ec_tree = Prefab_Tree(_world->parent, (V3){0.5, 0, 0});
 
     // ============ Test GUI ============ //
@@ -225,6 +237,7 @@ void Game_Awake()
     TextFont *defaultFont = TextFont_GetDefault();
     V3 textPos = {5.0f, 5.0f, 0.0f};
     Prefab_W_Text(testGUI, NULL, defaultFont, "V0.1", 12, textPos, QUATERNION_IDENTITY, 0xffffffff);
+    Prefab_W_Text(testGUI, NULL, defaultFont, _world->name, 12, (V3){5.0f, 40.0f, 0.0f}, QUATERNION_IDENTITY, 0xffffffff);
     Prefab_W_Text_DateTime(testGUI, testGUI->component->entity, defaultFont, 12, (V3){5.0f, 20, 0.0f}, QUATERNION_IDENTITY, 0xffffffff); // Dark Blue
 
     // ============ Call Awake ============ //
@@ -237,7 +250,7 @@ void Game_Awake()
     EC_GUI *worldSpaceGUI = Prefab_GUI(_ec_player->component->entity, "World-Space GUI", GUI_RENDER_MODE_WORLD_SPACE, (V2){1280, 720}, true);
     // Create 3D text
     TextFont *default3DTextFont = TextFont_GetDefault();
-    W_Text *text3d = Prefab_W_Text(worldSpaceGUI, NULL, default3DTextFont, "Mohanned", 1, V3_ADD(playerPos, (V3){-1, 2, 0}), QUATERNION_IDENTITY, 0xffffffff);
+    W_Text *text3d = Prefab_W_Text(worldSpaceGUI, NULL, default3DTextFont, _ec_player->component->entity->name, 1, V3_ADD(playerPos, (V3){-1, 2, 0}), QUATERNION_IDENTITY, 0xffffffff);
     T_WPos_Set(&text3d->component->entity->transform, V3_ADD(playerPos, (V3){0, 2, 0}));
     T_WRot_Add(&text3d->component->entity->transform, (V3){180, 0, 0});
 
